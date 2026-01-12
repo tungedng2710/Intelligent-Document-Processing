@@ -1,0 +1,5 @@
+{
+    "0.0.0.0:7873/parse": "Gemini 2.5 Flash",
+    "0.0.0.0:7875/parse": "PaddleOCR-VL",
+    "0.0.0.0:9890/parse": "Qwen3_VL t_Square"
+}
