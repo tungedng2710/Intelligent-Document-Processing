@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -534,6 +535,60 @@
             border-color: var(--primary-color);
         }
 
+        .progress-section {
+            display: none;
+            padding: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .progress-section.show {
+            display: block;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .progress-header h4 {
+            margin: 0;
+            font-size: 0.95rem;
+            color: white;
+        }
+
+        .progress-text {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 700;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
         @media (max-width: 1200px) {
             .three-column-layout {
                 grid-template-columns: 1fr;
@@ -663,6 +718,15 @@
                                 </button>
                             </div>
                         </div>
+                        <div class="progress-section" id="progressSection">
+                            <div class="progress-header">
+                                <h4><i class="fas fa-spinner fa-spin"></i> Processing Pages</h4>
+                                <span class="progress-text" id="progressText">0 / 0</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" id="progressBar" style="width: 0%">0%</div>
+                            </div>
+                        </div>
                         <div class="preview-container">
                             <div class="loading" id="loading">
                                 <div class="spinner"></div>
@@ -679,7 +743,7 @@
     <script>
         let selectedFile = null;
         let markdownContent = '';
-        let outputImage = null;
+        let outputImages = []; // Array to store detection images from all pages
         let currentFilename = '';
 
         // DOM Elements
@@ -699,6 +763,11 @@
         const serviceUrlSelect = document.getElementById('serviceUrlSelect');
         const settingsSection = document.getElementById('settingsSection');
         const formatSelect = document.getElementById('formatSelect');
+        
+        // Progress Elements
+        const progressSection = document.getElementById('progressSection');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
         
         // PDF Preview Elements
         const pdfControls = document.getElementById('pdfControls');
@@ -938,52 +1007,163 @@
             filePlaceholder.style.display = 'block';
             filePlaceholder.textContent = 'No file uploaded yet';
             
-            outputImage = null;
+            outputImages = [];
             markdownPreview.innerHTML = '';
         });
+
+        // Extract single page from PDF as new PDF
+        async function extractPdfPage(pdfDoc, pageNum) {
+            const pdfBytes = await selectedFile.arrayBuffer();
+            const PDFLib = window.PDFLib;
+            
+            // Load PDF with PDF-lib
+            const srcPdf = await PDFLib.PDFDocument.load(pdfBytes);
+            const newPdf = await PDFLib.PDFDocument.create();
+            
+            // Copy single page
+            const [copiedPage] = await newPdf.copyPages(srcPdf, [pageNum - 1]);
+            newPdf.addPage(copiedPage);
+            
+            // Get bytes and create blob
+            const newPdfBytes = await newPdf.save();
+            return new Blob([newPdfBytes], { type: 'application/pdf' });
+        }
 
         // Analyze document
         analyzeBtn.addEventListener('click', async () => {
             if (!selectedFile) return;
 
             hideError();
-            loading.classList.add('show');
             analyzeBtn.disabled = true;
-
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-
-            try {
-                const response = await fetch('/api/analyze', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.detail || 'Analysis failed');
-                }
-
-                markdownContent = data.markdown;
+            
+            // Check if this is a multi-page PDF
+            const isPdf = selectedFile.type === 'application/pdf';
+            const isMultiPage = pdfDoc && pdfDoc.numPages > 1;
+            
+            if (isPdf && isMultiPage) {
+                // Process all pages of multi-page PDF
+                progressSection.classList.add('show');
+                loading.classList.add('show');
                 
-                // Check if response has output_image (detection result)
-                if (data.output_image) {
-                    outputImage = data.output_image;
-                    formatSelect.value = 'detection';
-                } else {
-                    outputImage = null;
-                }
+                const totalPages = pdfDoc.numPages;
+                let processedPages = 0;
+                let combinedMarkdown = '';
+                let detectionImages = []; // Array to store all detection images
                 
-                displayMarkdown(markdownContent);
-                downloadMdBtn.disabled = false;
-                downloadBtn.disabled = false;
+                try {
+                    // Process each page
+                    for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+                        // Update progress
+                        progressText.textContent = `${processedPages} / ${totalPages}`;
+                        const percentage = Math.round((processedPages / totalPages) * 100);
+                        progressBar.style.width = percentage + '%';
+                        progressBar.textContent = percentage + '%';
+                        
+                        // Extract page as separate PDF
+                        const pageBlob = await extractPdfPage(pdfDoc, pageNum);
+                        const pageFile = new File([pageBlob], `page_${pageNum}.pdf`, { type: 'application/pdf' });
+                        
+                        // Send to analysis service
+                        const formData = new FormData();
+                        formData.append('file', pageFile);
+                        
+                        const response = await fetch('/api/analyze', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (!response.ok) {
+                            throw new Error(data.detail || `Analysis failed for page ${pageNum}`);
+                        }
+                        
+                        // Combine results
+                        if (totalPages > 1) {
+                            combinedMarkdown += `\n\n---\n## Page ${pageNum}\n\n`;
+                        }
+                        combinedMarkdown += data.markdown;
+                        
+                        // Collect detection images from all pages
+                        if (data.output_image) {
+                            detectionImages.push({
+                                pageNum: pageNum,
+                                image: data.output_image
+                            });
+                        }
+                        
+                        processedPages++;
+                    }
+                    
+                    // Final progress update
+                    progressText.textContent = `${totalPages} / ${totalPages}`;
+                    progressBar.style.width = '100%';
+                    progressBar.textContent = '100%';
+                    
+                    // Display combined results
+                    markdownContent = combinedMarkdown;
+                    
+                    // Set detection images array if available
+                    if (detectionImages.length > 0) {
+                        outputImages = detectionImages;
+                        formatSelect.value = 'detection';
+                    } else {
+                        outputImages = [];
+                    }
+                    
+                    displayMarkdown(markdownContent);
+                    downloadMdBtn.disabled = false;
+                    downloadBtn.disabled = false;
+                    
+                } catch (error) {
+                    showError('Error analyzing document: ' + error.message);
+                } finally {
+                    loading.classList.remove('show');
+                    analyzeBtn.disabled = false;
+                    // Hide progress after 2 seconds
+                    setTimeout(() => {
+                        progressSection.classList.remove('show');
+                    }, 2000);
+                }
+            } else {
+                // Single page or non-PDF - process normally
+                loading.classList.add('show');
+                
+                const formData = new FormData();
+                formData.append('file', selectedFile);
 
-            } catch (error) {
-                showError('Error analyzing document: ' + error.message);
-            } finally {
-                loading.classList.remove('show');
-                analyzeBtn.disabled = false;
+                try {
+                    const response = await fetch('/api/analyze', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.detail || 'Analysis failed');
+                    }
+
+                    markdownContent = data.markdown;
+                    
+                    // Check if response has output_image (detection result)
+                    if (data.output_image) {
+                        outputImages = [{pageNum: 1, image: data.output_image}];
+                        formatSelect.value = 'detection';
+                    } else {
+                        outputImages = [];
+                    }
+                    
+                    displayMarkdown(markdownContent);
+                    downloadMdBtn.disabled = false;
+                    downloadBtn.disabled = false;
+
+                } catch (error) {
+                    showError('Error analyzing document: ' + error.message);
+                } finally {
+                    loading.classList.remove('show');
+                    analyzeBtn.disabled = false;
+                }
             }
         });
 
@@ -1081,16 +1261,27 @@
             const format = formatSelect.value;
             
             if (format === 'detection') {
-                // Display detection image if available
-                if (outputImage) {
-                    markdownPreview.innerHTML = `
-                        <div style="text-align: center;">
-                            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Detection Result</h3>
-                            <img src="data:image/png;base64,${outputImage}" 
-                                 alt="Detection Output" 
-                                 style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: var(--shadow);" />
-                        </div>
-                    `;
+                // Display all detection images if available
+                if (outputImages.length > 0) {
+                    let imagesHtml = '<div style="text-align: center;">';
+                    imagesHtml += '<h3 style="margin-bottom: 1.5rem; color: var(--text-primary);">Detection Results</h3>';
+                    
+                    outputImages.forEach((item, index) => {
+                        imagesHtml += `
+                            <div style="margin-bottom: 2rem;">
+                                <h4 style="color: var(--text-secondary); margin-bottom: 0.75rem;">Page ${item.pageNum}</h4>
+                                <img src="data:image/png;base64,${item.image}" 
+                                     alt="Detection Output Page ${item.pageNum}" 
+                                     style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: var(--shadow); margin-bottom: 1rem;" />
+                            </div>
+                        `;
+                        if (index < outputImages.length - 1) {
+                            imagesHtml += '<hr style="margin: 2rem 0; border: none; border-top: 2px solid var(--border-color);" />';
+                        }
+                    });
+                    
+                    imagesHtml += '</div>';
+                    markdownPreview.innerHTML = imagesHtml;
                 } else {
                     markdownPreview.innerHTML = `<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">No detection image available</p>`;
                 }
