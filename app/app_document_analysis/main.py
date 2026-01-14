@@ -278,6 +278,122 @@ async def update_service_url(request: Request):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@app.post("/api/extract-json")
+async def extract_json(request: Request):
+    """
+    Extract structured JSON from markdown content using LLM
+    """
+    try:
+        body = await request.json()
+        markdown_content = body.get("markdown_content")
+        keys = body.get("keys", "")
+        
+        if not markdown_content:
+            raise HTTPException(status_code=400, detail="markdown_content is required")
+        
+        # Save markdown to temp file
+        file_id = str(uuid.uuid4())
+        temp_md_path = UPLOAD_DIR / f"{file_id}.md"
+        
+        with open(temp_md_path, 'w', encoding='utf-8') as f:
+            f.write(markdown_content)
+        
+        # Prepare keys list
+        keys_list = [k.strip() for k in keys.split(',') if k.strip()] if keys else []
+        
+        # Build custom prompt if keys provided
+        if keys_list:
+            schema_fields = ',\n  '.join([f'"{key}": "string | null"' for key in keys_list])
+            custom_schema = '{\n  ' + schema_fields + '\n}'
+            
+            prompt = f"""You are an information extraction engine.
+
+Task:
+Extract structured data from the Markdown text below and return ONLY a valid JSON object.
+
+Rules:
+- Output must be strict JSON (no markdown, no code fences, no comments).
+- Use null for missing fields.
+- Do not invent information.
+- Keep numbers as numbers, booleans as booleans, dates as ISO-8601 strings if possible.
+
+Schema to produce:
+{custom_schema}
+
+Markdown input:
+<<<MARKDOWN
+{markdown_content}
+MARKDOWN>>>
+"""
+        else:
+            # Use default prompt
+            prompt = f"""You are an information extraction engine.
+
+Task:
+Extract structured data from the Markdown text below and return ONLY a valid JSON object.
+
+Rules:
+- Output must be strict JSON (no markdown, no code fences, no comments).
+- Use null for missing fields.
+- Do not invent information.
+
+Markdown input:
+<<<MARKDOWN
+{markdown_content}
+MARKDOWN>>>
+"""
+        
+        # Call Ollama API
+        ollama_url = "http://0.0.0.0:7860"
+        model = "qwen3-vl:8b"
+        
+        payload = {
+            "model": model,
+            "prompt": prompt,
+            "stream": False,
+            "format": "json"
+        }
+        
+        async with httpx.AsyncClient(timeout=300.0) as client:
+            response = await client.post(f"{ollama_url}/api/generate", json=payload)
+        
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"Ollama API error: {response.text}"
+            )
+        
+        result = response.json()
+        response_text = result.get('response', '') or result.get('thinking', '')
+        
+        if not response_text:
+            raise HTTPException(status_code=500, detail="Empty response from Ollama API")
+        
+        # Parse JSON response
+        try:
+            json_result = json.loads(response_text)
+        except json.JSONDecodeError as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to parse JSON from LLM response: {str(e)}"
+            )
+        
+        # Clean up temp file
+        if temp_md_path.exists():
+            os.remove(temp_md_path)
+        
+        return JSONResponse({
+            "success": True,
+            "json_data": json_result
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error extracting JSON: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=7869)
