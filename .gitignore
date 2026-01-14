@@ -144,9 +144,11 @@ test*
 webapp/rtsp_url.json
 *.jpeg
 *.json
+!**/service_urls.example.json
 *.md
 *.png
 app*/
+!app/app_document_analysis/service_urls.example.json
 output*/
 extractor/unused*
 extractor/test*
