@@ -1551,6 +1551,11 @@
 
             const keys = jsonKeysInput.value.trim();
             
+            if (!keys) {
+                showError('Please enter keys to extract (e.g., title, author, date)');
+                return;
+            }
+            
             extractJsonBtn.disabled = true;
             jsonLoading.style.display = 'block';
             jsonPreview.style.display = 'block';
