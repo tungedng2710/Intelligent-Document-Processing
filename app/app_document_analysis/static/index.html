@@ -127,16 +127,20 @@
         .upload-zone .btn-select {
             display: inline-block;
             padding: 0.75rem 1.5rem;
-            background: var(--primary-color);
-            color: white;
-            border-radius: 8px;
+            background: rgba(79, 70, 229, 0.15);
+            color: var(--primary-color);
+            border: 1px solid rgba(79, 70, 229, 0.3);
+            border-radius: 16px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .upload-zone .btn-select:hover {
-            background: var(--primary-dark);
+            background: rgba(79, 70, 229, 0.25);
+            border-color: rgba(79, 70, 229, 0.5);
             transform: translateY(-2px);
         }
 
@@ -179,17 +183,20 @@
         }
 
         .btn-remove {
-            background: none;
-            border: none;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
             color: var(--danger-color);
             cursor: pointer;
             padding: 0.5rem;
-            border-radius: 4px;
-            transition: background 0.3s ease;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .btn-remove:hover {
-            background: #fee2e2;
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.4);
         }
 
         .action-buttons {
@@ -202,8 +209,8 @@
         .btn {
             flex: 1;
             padding: 0.75rem 1rem;
-            border: none;
-            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
             font-size: 0.9rem;
             font-weight: 600;
             cursor: pointer;
@@ -212,6 +219,8 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .btn:disabled {
@@ -220,25 +229,29 @@
         }
 
         .btn-primary {
-            background: var(--primary-color);
-            color: white;
+            background: rgba(79, 70, 229, 0.15);
+            color: var(--primary-color);
+            border-color: rgba(79, 70, 229, 0.3);
         }
 
         .btn-primary:hover:not(:disabled) {
-            background: var(--primary-dark);
+            background: rgba(79, 70, 229, 0.25);
+            border-color: rgba(79, 70, 229, 0.5);
             transform: translateY(-2px);
-            box-shadow: var(--shadow);
+            box-shadow: 0 8px 16px rgba(79, 70, 229, 0.2);
         }
 
         .btn-success {
-            background: var(--success-color);
-            color: white;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
+            border-color: rgba(16, 185, 129, 0.3);
         }
 
         .btn-success:hover:not(:disabled) {
-            background: #059669;
+            background: rgba(16, 185, 129, 0.25);
+            border-color: rgba(16, 185, 129, 0.5);
             transform: translateY(-2px);
-            box-shadow: var(--shadow);
+            box-shadow: 0 8px 16px rgba(16, 185, 129, 0.2);
         }
 
         .results-section {
@@ -319,9 +332,9 @@
 
         .pdf-nav-btn {
             position: absolute;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.15);
             color: white;
-            border: none;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             padding: 2rem 0.75rem;
             cursor: pointer;
             font-size: 1.5rem;
@@ -332,10 +345,13 @@
             opacity: 0;
             pointer-events: auto;
             border-radius: 0;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         .pdf-nav-btn:hover:not(:disabled) {
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.4);
             opacity: 1 !important;
         }
 
@@ -373,12 +389,15 @@
             transform: translateX(-50%);
             font-size: 0.85rem;
             color: white;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             padding: 0.3rem 0.75rem;
-            border-radius: 16px;
+            border-radius: 20px;
             font-weight: 500;
             z-index: 10;
             pointer-events: none;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
 
         #pdfCanvas {
@@ -502,15 +521,21 @@
         .settings-section {
             display: none;
             margin-top: 1rem;
-            padding: 1rem;
-            background: var(--bg-color);
-            border-radius: 8px;
+            padding: 1.25rem;
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(124, 58, 237, 0.08) 100%);
+            border: 1px solid rgba(79, 70, 229, 0.15);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08);
         }
 
         .settings-section h3 {
             font-size: 0.95rem;
-            margin-bottom: 0.75rem;
-            color: var(--text-primary);
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            font-weight: 700;
+            letter-spacing: 0.3px;
         }
 
         .input-group {
@@ -521,18 +546,42 @@
 
         .input-group select {
             flex: 1;
-            padding: 0.75rem;
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 0.9rem;
-            background: white;
-            transition: border-color 0.3s ease;
+            padding: 0.875rem 1rem;
+            padding-left: 1rem;
+            border: 2px solid rgba(79, 70, 229, 0.25);
+            border-radius: 12px;
+            font-size: 0.925rem;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.08);
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.875rem center;
+            background-size: 16px;
+            padding-right: 2.5rem;
+        }
+
+        .input-group select:hover {
+            border-color: rgba(79, 70, 229, 0.4);
+            background: rgba(255, 255, 255, 0.65);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.12);
+            transform: translateY(-1px);
         }
 
         .input-group select:focus {
             outline: none;
-            border-color: var(--primary-color);
+            border-color: rgba(79, 70, 229, 0.6);
+            background: rgba(255, 255, 255, 0.75);
+            box-shadow: 0 4px 16px rgba(79, 70, 229, 0.2), 0 0 0 3px rgba(79, 70, 229, 0.1);
+            transform: translateY(-1px);
         }
 
         .progress-section {
@@ -703,16 +752,16 @@
                                 Output
                             </h3>
                             <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                <select id="formatSelect" style="padding: 0.4rem 0.6rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; background: white;">
+                                <select id="formatSelect" style="padding: 0.4rem 0.6rem; border: 1px solid rgba(79, 70, 229, 0.2); border-radius: 16px; font-size: 0.85rem; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--text-primary);">
                                     <option value="markdown">Markdown</option>
                                     <option value="text">Plain Text</option>
                                     <option value="detection">Detection</option>
                                 </select>
-                                <button class="btn btn-success" id="downloadMdBtn" disabled style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                                <button class="btn btn-success" id="downloadMdBtn" disabled style="padding: 0.4rem 0.8rem; font-size: 0.85rem; min-width: 80px;">
                                     <i class="fas fa-file-download"></i>
                                     MD
                                 </button>
-                                <button class="btn btn-success" id="downloadBtn" disabled style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                                <button class="btn btn-success" id="downloadBtn" disabled style="padding: 0.4rem 0.8rem; font-size: 0.85rem; min-width: 80px;">
                                     <i class="fas fa-download"></i>
                                     DOCX
                                 </button>
@@ -1116,7 +1165,9 @@
                     downloadBtn.disabled = false;
                     
                 } catch (error) {
-                    showError('Error analyzing document: ' + error.message);
+                    const errorMsg = error.message || 'Unknown error occurred';
+                    showError('Error analyzing document: ' + errorMsg);
+                    console.error('Analysis error:', error);
                 } finally {
                     loading.classList.remove('show');
                     analyzeBtn.disabled = false;
@@ -1159,7 +1210,9 @@
                     downloadBtn.disabled = false;
 
                 } catch (error) {
-                    showError('Error analyzing document: ' + error.message);
+                    const errorMsg = error.message || 'Unknown error occurred';
+                    showError('Error analyzing document: ' + errorMsg);
+                    console.error('Analysis error:', error);
                 } finally {
                     loading.classList.remove('show');
                     analyzeBtn.disabled = false;
@@ -1252,7 +1305,9 @@
                     console.log('Service URL updated to:', selectedUrl);
                 }
             } catch (error) {
-                showError('Error updating service URL: ' + error.message);
+                const errorMsg = 'Failed to update service URL. The service may be unavailable.';
+                showError(errorMsg);
+                console.error('Service URL update error:', error);
             }
         });
 
@@ -1310,6 +1365,26 @@
         function showError(message) {
             errorMessage.textContent = message;
             errorMessage.classList.add('show');
+            
+            // Also display error in output section
+            markdownPreview.innerHTML = `
+                <div style="text-align: center; padding: 3rem 2rem;">
+                    <div style="display: inline-block; padding: 2rem; background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%); border: 2px solid rgba(239, 68, 68, 0.3); border-radius: 16px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 8px 24px rgba(239, 68, 68, 0.15);">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3.5rem; color: #ef4444; margin-bottom: 1rem; display: block;"></i>
+                        <h3 style="color: #dc2626; margin-bottom: 0.75rem; font-weight: 700;">Service Error</h3>
+                        <p style="color: #991b1b; font-size: 0.95rem; max-width: 500px; line-height: 1.6;">${message}</p>
+                        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(239, 68, 68, 0.2);">
+                            <p style="font-size: 0.85rem; color: #7f1d1d; margin-bottom: 0.5rem;"><strong>Troubleshooting:</strong></p>
+                            <ul style="font-size: 0.85rem; color: #7f1d1d; text-align: left; display: inline-block; line-height: 1.8;">
+                                <li>Check if the analysis service is running</li>
+                                <li>Verify the service URL in settings</li>
+                                <li>Ensure the file format is supported</li>
+                                <li>Try refreshing the page and uploading again</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         function hideError() {
