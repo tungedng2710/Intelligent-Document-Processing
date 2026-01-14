@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TonAI Document Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -66,10 +69,16 @@
         }
 
         .header h1 {
+            font-family: 'Orbitron', sans-serif;
             font-size: 2rem;
-            font-weight: 700;
+            font-weight: 800;
             margin-bottom: 0.25rem;
             color: var(--text-primary);
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .header p {
@@ -987,9 +996,9 @@
                     pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
                         pdfDoc = pdf;
                         
-                        // Validate page count (20 pages limit)
-                        if (pdf.numPages > 20) {
-                            showError(`PDF has ${pdf.numPages} pages, exceeding the 20-page limit.`);
+                        // Validate page count (10 pages limit)
+                        if (pdf.numPages > 10) {
+                            showError(`PDF has ${pdf.numPages} pages, exceeding the 10-page limit.`);
                             pdfDoc = null;
                             pdfControls.style.display = 'none';
                             pdfCanvas.style.display = 'none';
@@ -998,7 +1007,7 @@
                                 <div style="text-align: center; padding: 2rem;">
                                     <i class="fas fa-exclamation-triangle" style="font-size: 4rem; color: #ef4444; margin-bottom: 1rem;"></i>
                                     <p style="font-weight: 600; color: #ef4444;">PDF Too Large</p>
-                                    <p style="color: var(--text-secondary); font-size: 0.9rem;">${pdf.numPages} pages (Max: 20 pages)</p>
+                                    <p style="color: var(--text-secondary); font-size: 0.9rem;">${pdf.numPages} pages (Max: 10 pages)</p>
                                 </div>
                             `;
                             // Disable analyze button
@@ -1132,6 +1141,10 @@
                             combinedMarkdown += `\n\n---\n## Page ${pageNum}\n\n`;
                         }
                         combinedMarkdown += data.markdown;
+                        
+                        // Update markdown display after each page
+                        markdownContent = combinedMarkdown;
+                        displayMarkdown(markdownContent);
                         
                         // Collect detection images from all pages
                         if (data.output_image) {
