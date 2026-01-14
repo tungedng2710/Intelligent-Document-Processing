@@ -1097,9 +1097,9 @@
                     pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
                         pdfDoc = pdf;
                         
-                        // Validate page count (10 pages limit)
-                        if (pdf.numPages > 10) {
-                            showError(`PDF has ${pdf.numPages} pages, exceeding the 10-page limit.`);
+                        // Validate page count (20 pages limit)
+                        if (pdf.numPages > 20) {
+                            showError(`PDF has ${pdf.numPages} pages, exceeding the 20-page limit.`);
                             pdfDoc = null;
                             pdfControls.style.display = 'none';
                             pdfCanvas.style.display = 'none';
