@@ -281,7 +281,7 @@ async def update_service_url(request: Request):
 @app.post("/api/extract-json")
 async def extract_json(request: Request):
     """
-    Extract structured JSON from markdown content using LLM
+    Extract structured JSON from markdown content using LLMl
     """
     try:
         body = await request.json()
