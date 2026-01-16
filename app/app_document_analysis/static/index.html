@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TonAI Document Analysis</title>
+    <link rel="icon" type="image/png" href="/static/tonai_logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -62,10 +63,8 @@
         }
 
         .header-logo img {
-            height: 40px;
+            height: 50px;
             width: auto;
-            border-radius: 50%;
-            box-shadow: var(--shadow);
         }
 
         .header h1 {
@@ -269,7 +268,7 @@
 
         .three-column-layout {
             display: grid;
-            grid-template-columns: 20% 40% 40%;
+            grid-template-columns: 20% 35% 45%;
             gap: 1rem;
             align-items: start;
         }
@@ -647,6 +646,78 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
+        .json-extract-section {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%);
+            border: 1px solid rgba(6, 182, 212, 0.15);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.08);
+        }
+
+        .json-extract-section h4 {
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+            color: var(--secondary-color);
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .json-keys-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 12px;
+            font-size: 0.875rem;
+            background: rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            margin-bottom: 0.75rem;
+        }
+
+        .json-keys-input:focus {
+            outline: none;
+            border-color: rgba(6, 182, 212, 0.5);
+            background: rgba(255, 255, 255, 0.75);
+            box-shadow: 0 4px 16px rgba(6, 182, 212, 0.2);
+        }
+
+        .json-keys-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        .json-preview {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .btn-secondary {
+            background: rgba(6, 182, 212, 0.15);
+            color: var(--secondary-color);
+            border-color: rgba(6, 182, 212, 0.3);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: rgba(6, 182, 212, 0.25);
+            border-color: rgba(6, 182, 212, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(6, 182, 212, 0.2);
+        }
+
         @media (max-width: 1200px) {
             .three-column-layout {
                 grid-template-columns: 1fr;
@@ -678,7 +749,7 @@
         <div class="header">
             <div class="header-logo">
                 <img src="/static/tonai_logo.png" alt="TonAI Logo">
-                <h1>TonAI Document Analysis</h1>
+                <h1>Document Analysis</h1>
             </div>
             <p>Intelligent Document Processing - Upload, analyze, and convert your documents</p>
         </div>
@@ -792,6 +863,27 @@
                             </div>
                             <div class="markdown-preview" id="markdownPreview"></div>
                         </div>
+
+                        <!-- JSON Extraction Section -->
+                        <div class="json-extract-section" id="jsonExtractSection" style="display: none;">
+                            <h4><i class="fas fa-code"></i> Extract to JSON</h4>
+                            <input 
+                                type="text" 
+                                class="json-keys-input" 
+                                id="jsonKeysInput" 
+                                placeholder="Enter keys (e.g., title, author, date)" />
+                            <button class="btn btn-secondary" id="extractJsonBtn" style="width: 100%; margin-bottom: 1rem;">
+                                <i class="fas fa-magic"></i>
+                                Extract JSON
+                            </button>
+                            <div class="json-preview" id="jsonPreview" style="display: none;">
+                                <div class="loading" id="jsonLoading" style="display: none;">
+                                    <div class="spinner"></div>
+                                    <p>Extracting...</p>
+                                </div>
+                                <pre id="jsonOutput"></pre>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -826,6 +918,14 @@
         const progressSection = document.getElementById('progressSection');
         const progressBar = document.getElementById('progressBar');
         const progressText = document.getElementById('progressText');
+        
+        // JSON Extraction Elements
+        const jsonExtractSection = document.getElementById('jsonExtractSection');
+        const jsonKeysInput = document.getElementById('jsonKeysInput');
+        const extractJsonBtn = document.getElementById('extractJsonBtn');
+        const jsonPreview = document.getElementById('jsonPreview');
+        const jsonOutput = document.getElementById('jsonOutput');
+        const jsonLoading = document.getElementById('jsonLoading');
         
         // PDF Preview Elements
         const pdfControls = document.getElementById('pdfControls');
@@ -996,9 +1096,9 @@
                     pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
                         pdfDoc = pdf;
                         
-                        // Validate page count (10 pages limit)
-                        if (pdf.numPages > 10) {
-                            showError(`PDF has ${pdf.numPages} pages, exceeding the 10-page limit.`);
+                        // Validate page count (20 pages limit)
+                        if (pdf.numPages > 20) {
+                            showError(`PDF has ${pdf.numPages} pages, exceeding the 20-page limit.`);
                             pdfDoc = null;
                             pdfControls.style.display = 'none';
                             pdfCanvas.style.display = 'none';
@@ -1177,6 +1277,9 @@
                     downloadMdBtn.disabled = false;
                     downloadBtn.disabled = false;
                     
+                    // Show JSON extraction section when markdown is available
+                    jsonExtractSection.style.display = 'block';
+
                 } catch (error) {
                     const errorMsg = error.message || 'Unknown error occurred';
                     showError('Error analyzing document: ' + errorMsg);
@@ -1221,6 +1324,9 @@
                     displayMarkdown(markdownContent);
                     downloadMdBtn.disabled = false;
                     downloadBtn.disabled = false;
+                    
+                    // Show JSON extraction section when markdown is available
+                    jsonExtractSection.style.display = 'block';
 
                 } catch (error) {
                     const errorMsg = error.message || 'Unknown error occurred';
@@ -1433,6 +1539,55 @@
                 settingsSection.style.display = 'none';
             }
         }
+
+        // JSON Extraction Handler
+        extractJsonBtn.addEventListener('click', async () => {
+            if (!markdownContent) {
+                showError('No markdown content available. Please analyze a document first.');
+                return;
+            }
+
+            const keys = jsonKeysInput.value.trim();
+            
+            if (!keys) {
+                showError('Please enter keys to extract (e.g., title, author, date)');
+                return;
+            }
+            
+            extractJsonBtn.disabled = true;
+            jsonLoading.style.display = 'block';
+            jsonPreview.style.display = 'block';
+            jsonOutput.textContent = '';
+
+            try {
+                const response = await fetch('/api/extract-json', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        markdown_content: markdownContent,
+                        keys: keys
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'JSON extraction failed');
+                }
+
+                // Display formatted JSON
+                jsonOutput.textContent = JSON.stringify(data.json_data, null, 2);
+
+            } catch (error) {
+                jsonOutput.textContent = `Error: ${error.message}`;
+                console.error('JSON extraction error:', error);
+            } finally {
+                jsonLoading.style.display = 'none';
+                extractJsonBtn.disabled = false;
+            }
+        });
 
         loadServiceUrls();
     </script>

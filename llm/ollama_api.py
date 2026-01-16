@@ -44,7 +44,7 @@ def ollama_stream_inference(
                 continue
 
             # Extract the chunk of text
-            text_chunk = data.get("response", "")
+            text_chunk = data.get("response", "")                                                                         
             # Print directly to terminal (no extra newline, flush so it appears in real time)
             print(text_chunk, end="", flush=True)
 
