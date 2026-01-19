@@ -771,7 +771,7 @@
                                 <p>Drag & drop or click to browse</p>
                                 <span class="btn-select">Select File</span>
                                 <p style="margin-top: 0.5rem; font-size: 0.8rem;">PDF, PNG, JPG, JPEG</p>
-                                <input type="file" id="fileInput" class="file-input" accept=".pdf,.png,.jpg,.jpeg,.tiff,.bmp">
+                                <input type="file" id="fileInput" class="file-input" accept=".pdf,.png,.jpg,.jpeg,.tiff,.bmp,.webp">
                             </div>
 
                             <div class="file-info" id="fileInfo">
@@ -836,6 +836,7 @@
                                     <option value="markdown">Markdown</option>
                                     <option value="text">Plain Text</option>
                                     <option value="detection">Detection</option>
+                                    <option value="json">JSON</option>
                                 </select>
                                 <button class="btn btn-success" id="downloadMdBtn" disabled style="padding: 0.4rem 0.8rem; font-size: 0.85rem; min-width: 80px;">
                                     <i class="fas fa-file-download"></i>
@@ -863,27 +864,6 @@
                             </div>
                             <div class="markdown-preview" id="markdownPreview"></div>
                         </div>
-
-                        <!-- JSON Extraction Section -->
-                        <div class="json-extract-section" id="jsonExtractSection" style="display: none;">
-                            <h4><i class="fas fa-code"></i> Extract to JSON</h4>
-                            <input 
-                                type="text" 
-                                class="json-keys-input" 
-                                id="jsonKeysInput" 
-                                placeholder="Enter keys (e.g., title, author, date)" />
-                            <button class="btn btn-secondary" id="extractJsonBtn" style="width: 100%; margin-bottom: 1rem;">
-                                <i class="fas fa-magic"></i>
-                                Extract JSON
-                            </button>
-                            <div class="json-preview" id="jsonPreview" style="display: none;">
-                                <div class="loading" id="jsonLoading" style="display: none;">
-                                    <div class="spinner"></div>
-                                    <p>Extracting...</p>
-                                </div>
-                                <pre id="jsonOutput"></pre>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -895,6 +875,8 @@
         let markdownContent = '';
         let outputImages = []; // Array to store detection images from all pages
         let currentFilename = '';
+        let extractData = null; // Store extracted JSON data
+        let isLoadingContent = false; // Flag to prevent re-rendering during content load
 
         // DOM Elements
         const uploadZone = document.getElementById('uploadZone');
@@ -919,13 +901,8 @@
         const progressBar = document.getElementById('progressBar');
         const progressText = document.getElementById('progressText');
         
-        // JSON Extraction Elements
-        const jsonExtractSection = document.getElementById('jsonExtractSection');
-        const jsonKeysInput = document.getElementById('jsonKeysInput');
-        const extractJsonBtn = document.getElementById('extractJsonBtn');
-        const jsonPreview = document.getElementById('jsonPreview');
-        const jsonOutput = document.getElementById('jsonOutput');
-        const jsonLoading = document.getElementById('jsonLoading');
+        // JSON Preview Elements
+        // (extracted JSON data is stored in extractData variable)
         
         // PDF Preview Elements
         const pdfControls = document.getElementById('pdfControls');
@@ -946,7 +923,12 @@
 
         // Format selector
         formatSelect.addEventListener('change', () => {
-            if (markdownContent) {
+            // Don't re-render if we're currently loading content
+            if (isLoadingContent) {
+                console.log('Skipping format change during content load');
+                return;
+            }
+            if (markdownContent || extractData) {
                 displayMarkdown(markdownContent);
             }
         });
@@ -1277,8 +1259,8 @@
                     downloadMdBtn.disabled = false;
                     downloadBtn.disabled = false;
                     
-                    // Show JSON extraction section when markdown is available
-                    jsonExtractSection.style.display = 'block';
+                    // Note: extract field not supported for multi-page PDFs yet
+                    extractData = null;
 
                 } catch (error) {
                     const errorMsg = error.message || 'Unknown error occurred';
@@ -1311,22 +1293,46 @@
                         throw new Error(data.detail || 'Analysis failed');
                     }
 
-                    markdownContent = data.markdown;
+                    console.log('Received response:', data);
+                    console.log('Markdown length:', data.markdown ? data.markdown.length : 0);
+                    console.log('Has output_image:', !!data.output_image);
+                    console.log('Has extract:', !!data.extract);
+                    console.log('Extract data type:', typeof data.extract);
+                    console.log('Extract data preview:', data.extract ? JSON.stringify(data.extract).substring(0, 200) : 'null');
+
+                    // Set loading flag to prevent format change events from re-rendering
+                    isLoadingContent = true;
+
+                    markdownContent = data.markdown || '';
+                    extractData = data.extract || null;
+                    outputImages = [];
                     
                     // Check if response has output_image (detection result)
                     if (data.output_image) {
                         outputImages = [{pageNum: 1, image: data.output_image}];
                         formatSelect.value = 'detection';
-                    } else {
-                        outputImages = [];
+                    } 
+                    // Check if response has extract field - prioritize JSON view
+                    else if (data.extract) {
+                        formatSelect.value = 'json';
+                        console.log('Extract data received, switching to JSON view');
+                    }
+                    // Default to markdown
+                    else {
+                        formatSelect.value = 'markdown';
                     }
                     
+                    console.log('Format selector value:', formatSelect.value);
+                    console.log('extractData:', extractData !== null);
+                    
+                    // Render the content
                     displayMarkdown(markdownContent);
+                    
+                    // Clear loading flag after rendering is complete
+                    setTimeout(() => { isLoadingContent = false; }, 100);
+                    
                     downloadMdBtn.disabled = false;
                     downloadBtn.disabled = false;
-                    
-                    // Show JSON extraction section when markdown is available
-                    jsonExtractSection.style.display = 'block';
 
                 } catch (error) {
                     const errorMsg = error.message || 'Unknown error occurred';
@@ -1433,6 +1439,43 @@
         // Display markdown
         function displayMarkdown(markdown) {
             const format = formatSelect.value;
+            console.log('displayMarkdown called with format:', format);
+            console.log('extractData available:', extractData !== null);
+            console.log('extractData value:', extractData);
+            console.log('extractData type:', typeof extractData);
+            
+            if (format === 'json') {
+                // Display JSON if available (don't check markdown)
+                console.log('JSON format selected, rendering JSON view');
+                console.log('extractData:', extractData);
+                if (extractData && extractData !== null) {
+                    console.log('Rendering extract data as table');
+                    try {
+                        // Create table from JSON
+                        markdownPreview.innerHTML = '';
+                        const container = document.createElement('div');
+                        container.style.cssText = 'margin: 1rem; padding: 1rem; background: #f5f5f5; border-radius: 8px; overflow-x: auto;';
+                        
+                        const table = createTableFromJSON(extractData);
+                        container.appendChild(table);
+                        markdownPreview.appendChild(container);
+                        console.log('JSON table rendered successfully');
+                    } catch (error) {
+                        console.error('Error rendering JSON:', error);
+                        markdownPreview.innerHTML = `<p style="text-align: center; color: red; padding: 2rem;">Error rendering JSON: ${error.message}</p>`;
+                    }
+                } else {
+                    console.log('No extractData available');
+                    markdownPreview.innerHTML = `<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">No JSON data available</p>`;
+                }
+                return; // Exit early for JSON view
+            }
+            
+            // Check if markdown is empty or null (only for non-JSON views)
+            if (!markdown || markdown.trim() === '') {
+                markdownPreview.innerHTML = `<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">No content available. The analysis may have returned empty results.</p>`;
+                return;
+            }
             
             if (format === 'detection') {
                 // Display all detection images if available
@@ -1473,6 +1516,58 @@
         }
 
         // Utility functions
+        function createTableFromJSON(data, level = 0) {
+            const table = document.createElement('table');
+            table.style.cssText = 'width: 100%; border-collapse: collapse; margin-bottom: 1rem; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1);';
+            
+            if (Array.isArray(data)) {
+                // Handle arrays
+                data.forEach((item, index) => {
+                    const row = table.insertRow();
+                    const keyCell = row.insertCell(0);
+                    const valueCell = row.insertCell(1);
+                    
+                    keyCell.style.cssText = 'padding: 0.75rem; border: 1px solid #ddd; background: #f9f9f9; font-weight: 600; width: 30%; vertical-align: top;';
+                    valueCell.style.cssText = 'padding: 0.75rem; border: 1px solid #ddd; width: 70%; vertical-align: top;';
+                    
+                    keyCell.textContent = `[${index}]`;
+                    
+                    if (typeof item === 'object' && item !== null) {
+                        valueCell.appendChild(createTableFromJSON(item, level + 1));
+                    } else {
+                        valueCell.textContent = item !== null ? String(item) : 'null';
+                    }
+                });
+            } else if (typeof data === 'object' && data !== null) {
+                // Handle objects
+                for (const [key, value] of Object.entries(data)) {
+                    const row = table.insertRow();
+                    const keyCell = row.insertCell(0);
+                    const valueCell = row.insertCell(1);
+                    
+                    keyCell.style.cssText = 'padding: 0.75rem; border: 1px solid #ddd; background: #f9f9f9; font-weight: 600; width: 30%; vertical-align: top; word-break: break-word;';
+                    valueCell.style.cssText = 'padding: 0.75rem; border: 1px solid #ddd; width: 70%; vertical-align: top; word-break: break-word;';
+                    
+                    keyCell.textContent = key;
+                    
+                    if (typeof value === 'object' && value !== null) {
+                        valueCell.appendChild(createTableFromJSON(value, level + 1));
+                    } else {
+                        valueCell.textContent = value !== null ? String(value) : 'null';
+                        valueCell.style.color = value === null ? '#999' : '#333';
+                    }
+                }
+            }
+            
+            return table;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
@@ -1539,55 +1634,6 @@
                 settingsSection.style.display = 'none';
             }
         }
-
-        // JSON Extraction Handler
-        extractJsonBtn.addEventListener('click', async () => {
-            if (!markdownContent) {
-                showError('No markdown content available. Please analyze a document first.');
-                return;
-            }
-
-            const keys = jsonKeysInput.value.trim();
-            
-            if (!keys) {
-                showError('Please enter keys to extract (e.g., title, author, date)');
-                return;
-            }
-            
-            extractJsonBtn.disabled = true;
-            jsonLoading.style.display = 'block';
-            jsonPreview.style.display = 'block';
-            jsonOutput.textContent = '';
-
-            try {
-                const response = await fetch('/api/extract-json', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        markdown_content: markdownContent,
-                        keys: keys
-                    })
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.detail || 'JSON extraction failed');
-                }
-
-                // Display formatted JSON
-                jsonOutput.textContent = JSON.stringify(data.json_data, null, 2);
-
-            } catch (error) {
-                jsonOutput.textContent = `Error: ${error.message}`;
-                console.error('JSON extraction error:', error);
-            } finally {
-                jsonLoading.style.display = 'none';
-                extractJsonBtn.disabled = false;
-            }
-        });
 
         loadServiceUrls();
     </script>

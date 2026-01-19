@@ -2,16 +2,26 @@
 Extract bank report with large vision language model
 Prompt: prompts/bank_report_ver_1.0.txt
 Engine: Qwen3-VL with Ollama API (0.0.0.0:7860)
+API Server: FastAPI with image upload on port 7877
 """
 #!/usr/bin/env python3
 
 import argparse
 import json
 import sys
+import tempfile
+import os
 from pathlib import Path
 from typing import Optional
 
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.responses import JSONResponse
+import uvicorn
+
 from ollama_api import ollama_stream_inference
+
+# Initialize FastAPI app
+app = FastAPI(title="Bank Report Extraction API", version="1.0.0")
 
 
 def read_prompt_template(prompt_path: str) -> str:
@@ -120,6 +130,86 @@ def extract_bank_report(
     return result
 
 
+@app.post("/parse")
+async def parse_bank_report(
+    file: UploadFile = File(...),
+    prompt_path: str = "llm/prompts/bank_report_ver_1.0.txt",
+    model: str = "qwen3-vl:8b-instruct-bf16",
+    api_url: str = "http://0.0.0.0:7860/api/generate"
+):
+    """
+    API endpoint to parse bank report from uploaded image.
+    
+    Args:
+        file: Uploaded image file
+        prompt_path: Path to the prompt template file
+        model: Name of the Ollama model to use
+        api_url: URL of the Ollama API endpoint
+        
+    Returns:
+        JSON response with 'extract' field containing the extracted data as JSON string
+    """
+    # Validate file type
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    # Save uploaded file to temporary location
+    temp_file = None
+    try:
+        # Create temporary file
+        suffix = Path(file.filename).suffix if file.filename else ".png"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+            content = await file.read()
+            temp_file.write(content)
+            temp_path = temp_file.name
+        
+        # Extract information from the image
+        result = extract_bank_report(
+            image_path=temp_path,
+            prompt_path=prompt_path,
+            model=model,
+            api_url=api_url,
+            output_path=None
+        )
+        
+        # Convert result to JSON string for the 'extract' field
+        extract_json_str = json.dumps(result, ensure_ascii=False)
+        
+        # Return response with 'extract' field
+        return JSONResponse(content={
+            "extract": extract_json_str,
+            "status": "success"
+        })
+        
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to parse extraction result: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Extraction failed: {str(e)}")
+    finally:
+        # Clean up temporary file
+        if temp_file and os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except Exception:
+                pass
+
+
+def start_api_server(host: str = "0.0.0.0", port: int = 7877):
+    """
+    Start the FastAPI server.
+    
+    Args:
+        host: Host address to bind to
+        port: Port number to bind to
+    """
+    print(f"Starting Bank Report Extraction API server on {host}:{port}")
+    print(f"API endpoint: http://{host}:{port}/parse")
+    print(f"Documentation: http://{host}:{port}/docs")
+    uvicorn.run(app, host=host, port=port)
+
+
 def process_batch(
     input_dir: str,
     output_dir: str,
@@ -193,6 +283,12 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  # Start API server
+  python extract_bank_reports.py --server
+  
+  # Start API server on custom host/port
+  python extract_bank_reports.py --server --host 0.0.0.0 --port 7877
+  
   # Process a single image
   python extract_bank_reports.py input.png -o output.json
   
@@ -205,6 +301,24 @@ Examples:
   # Process with custom model
   python extract_bank_reports.py input.png -m qwen3-vl:8b-instruct-bf16 -o output.json
         """
+    )
+    
+    # API server mode
+    parser.add_argument(
+        "--server",
+        action="store_true",
+        help="Start API server mode"
+    )
+    parser.add_argument(
+        "--host",
+        default="0.0.0.0",
+        help="API server host (default: 0.0.0.0)"
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=7877,
+        help="API server port (default: 7877)"
     )
     
     # Single file processing arguments
@@ -251,6 +365,11 @@ Examples:
     )
     
     args = parser.parse_args()
+    
+    # API server mode
+    if args.server:
+        start_api_server(host=args.host, port=args.port)
+        return 0
     
     # Determine processing mode
     if args.batch_input:

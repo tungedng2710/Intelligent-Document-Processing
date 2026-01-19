@@ -80,6 +80,10 @@ async def analyze_document(file: UploadFile = File(...)):
         
         result = response.json()
         
+        # Log the raw response for debugging
+        logger.info(f"Raw response from service: {result}")
+        logger.info(f"Response keys: {list(result.keys())}")
+        
         # Clean up temporary file
         if temp_file_path.exists():
             os.remove(temp_file_path)
@@ -87,6 +91,25 @@ async def analyze_document(file: UploadFile = File(...)):
         # Extract markdown and output_image from response
         markdown_content = result.get("markdown", "")
         output_image = result.get("output_image", None)
+        extract_data = result.get("extract", None)
+        
+        # Handle extract field - it might be a JSON string that needs parsing
+        if extract_data and isinstance(extract_data, str):
+            try:
+                extract_data = json.loads(extract_data)
+                logger.info("Successfully parsed extract field from JSON string")
+            except json.JSONDecodeError as e:
+                logger.warning(f"Failed to parse extract field as JSON: {e}")
+                # Keep it as string if parsing fails
+        
+        # If no markdown but has extract, generate a simple markdown from extract
+        if not markdown_content and extract_data:
+            logger.info("No markdown field, using extract data as primary output")
+            markdown_content = "## Extracted Data\n\nData extracted and available in JSON view."
+        
+        logger.info(f"Extracted markdown length: {len(markdown_content) if markdown_content else 0}")
+        logger.info(f"Has output_image: {output_image is not None}")
+        logger.info(f"Has extract: {extract_data is not None}")
         
         response_data = {
             "success": True,
@@ -98,6 +121,10 @@ async def analyze_document(file: UploadFile = File(...)):
         # Include output_image if present (for detection mode)
         if output_image:
             response_data["output_image"] = output_image
+        
+        # Include extract if present (structured data)
+        if extract_data:
+            response_data["extract"] = extract_data
         
         return JSONResponse(response_data)
     
@@ -277,121 +304,6 @@ async def update_service_url(request: Request):
         logger.error(f"Error updating service URL: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
 
-
-@app.post("/api/extract-json")
-async def extract_json(request: Request):
-    """
-    Extract structured JSON from markdown content using LLMl
-    """
-    try:
-        body = await request.json()
-        markdown_content = body.get("markdown_content")
-        keys = body.get("keys", "")
-        
-        if not markdown_content:
-            raise HTTPException(status_code=400, detail="markdown_content is required")
-        
-        # Save markdown to temp file
-        file_id = str(uuid.uuid4())
-        temp_md_path = UPLOAD_DIR / f"{file_id}.md"
-        
-        with open(temp_md_path, 'w', encoding='utf-8') as f:
-            f.write(markdown_content)
-        
-        # Prepare keys list
-        keys_list = [k.strip() for k in keys.split(',') if k.strip()] if keys else []
-        
-        # Build custom prompt if keys provided
-        if keys_list:
-            schema_fields = ',\n  '.join([f'"{key}": "string | null"' for key in keys_list])
-            custom_schema = '{\n  ' + schema_fields + '\n}'
-            
-            prompt = f"""You are an information extraction engine.
-
-Task:
-Extract structured data from the Markdown text below and return ONLY a valid JSON object.
-
-Rules:
-- Output must be strict JSON (no markdown, no code fences, no comments).
-- Use null for missing fields.
-- Do not invent information.
-- Keep numbers as numbers, booleans as booleans, dates as ISO-8601 strings if possible.
-
-Schema to produce:
-{custom_schema}
-
-Markdown input:
-<<<MARKDOWN
-{markdown_content}
-MARKDOWN>>>
-"""
-        else:
-            # Use default prompt
-            prompt = f"""You are an information extraction engine.
-
-Task:
-Extract structured data from the Markdown text below and return ONLY a valid JSON object.
-
-Rules:
-- Output must be strict JSON (no markdown, no code fences, no comments).
-- Use null for missing fields.
-- Do not invent information.
-
-Markdown input:
-<<<MARKDOWN
-{markdown_content}
-MARKDOWN>>>
-"""
-        
-        # Call Ollama API
-        ollama_url = "http://0.0.0.0:7860"
-        model = "qwen3-vl:8b"
-        
-        payload = {
-            "model": model,
-            "prompt": prompt,
-            "stream": False,
-            "format": "json"
-        }
-        
-        async with httpx.AsyncClient(timeout=300.0) as client:
-            response = await client.post(f"{ollama_url}/api/generate", json=payload)
-        
-        if response.status_code != 200:
-            raise HTTPException(
-                status_code=response.status_code,
-                detail=f"Ollama API error: {response.text}"
-            )
-        
-        result = response.json()
-        response_text = result.get('response', '') or result.get('thinking', '')
-        
-        if not response_text:
-            raise HTTPException(status_code=500, detail="Empty response from Ollama API")
-        
-        # Parse JSON response
-        try:
-            json_result = json.loads(response_text)
-        except json.JSONDecodeError as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to parse JSON from LLM response: {str(e)}"
-            )
-        
-        # Clean up temp file
-        if temp_md_path.exists():
-            os.remove(temp_md_path)
-        
-        return JSONResponse({
-            "success": True,
-            "json_data": json_result
-        })
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error extracting JSON: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
