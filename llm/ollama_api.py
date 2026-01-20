@@ -79,6 +79,6 @@ if __name__ == "__main__":
     full_response = ollama_stream_inference(
         prompt ="Why is the sky blue?",
         model = "qwen3-vl",
-        url = "http://116.103.227.252:7860/api/generate"
+        url = "http://0.0.0.0:7860/api/generate"
     )
     print(full_response)
