@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="TonAI Art — Generate stunning images from text using AI." />
+  <title>TonAI Art &mdash; AI Image Generator</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <!-- ─── NAVBAR ──────────────────────────────────────────────────── -->
+  <header class="navbar">
+    <div class="navbar-inner">
+      <div class="brand">
+        <img class="brand-icon" src="https://raw.githubusercontent.com/tungedng2710/tungedng2710.github.io/main/assets/images/logo.png" alt="TonAI logo" />
+        <span class="brand-name">TonAI <span class="brand-sub">Art</span></span>
+      </div>
+
+      <nav class="nav-actions">
+        <span class="nav-badge">AI Image Generator</span>
+        <button id="theme-toggle" class="icon-btn" aria-label="Toggle dark mode" title="Toggle dark / light mode">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ─── TOAST ────────────────────────────────────────────────────── -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- ─── MAIN ─────────────────────────────────────────────────────── -->
+  <main class="wrap">
+    <div class="page-hero">
+      <h1 class="hero-title">Text <span class="gradient-text">to Image</span></h1>
+      <p class="hero-sub">Describe what you imagine — TonAI turns words into art.</p>
+    </div>
+
+    <div class="grid">
+
+      <!-- LEFT: controls -->
+      <section class="card" aria-label="Image settings">
+        <div class="field-group">
+          <div class="label-row">
+            <label for="prompt">Prompt</label>
+            <span id="prompt-counter" class="char-counter">0 / 500</span>
+          </div>
+          <div class="prompt-wrap">
+            <textarea id="prompt" maxlength="500"
+              placeholder="A cinematic close-up of a red fox in a misty autumn forest at golden hour..."></textarea>
+            <button id="history-btn" class="prompt-action-btn" type="button" title="Prompt history" aria-label="Show prompt history">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </button>
+          </div>
+          <ul id="history-dropdown" class="history-dropdown" hidden></ul>
+        </div>
+        <div class="example-prompts">
+          <span class="example-label">Try:</span>
+          <button class="ex-chip" type="button">Cinematic fox in misty forest at golden hour</button>
+          <button class="ex-chip" type="button">Futuristic neon-lit Tokyo street at night, rain reflections</button>
+          <button class="ex-chip" type="button">Oil painting of a lone lighthouse on a stormy cliff</button>
+          <button class="ex-chip" type="button">Astronaut floating above a pastel-colored alien planet</button>
+        </div>
+
+        <div class="field-group">
+          <label for="aspect_ratio_preset">Aspect Ratio</label>
+          <div class="ratio-grid">
+            <button class="ratio-btn active" data-ratio="1:1">1:1</button>
+            <button class="ratio-btn" data-ratio="4:3">4:3</button>
+            <button class="ratio-btn" data-ratio="3:4">3:4</button>
+            <button class="ratio-btn" data-ratio="16:9">16:9</button>
+            <button class="ratio-btn" data-ratio="9:16">9:16</button>
+            <button class="ratio-btn" data-ratio="3:2">3:2</button>
+            <button class="ratio-btn" data-ratio="2:3">2:3</button>
+          </div>
+          <select id="aspect_ratio_preset" class="sr-only" aria-hidden="true">
+            <option value="1:1" selected>1:1</option>
+            <option value="4:3">4:3</option>
+            <option value="3:4">3:4</option>
+            <option value="16:9">16:9</option>
+            <option value="9:16">9:16</option>
+            <option value="3:2">3:2</option>
+            <option value="2:3">2:3</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <div class="field-group">
+            <label for="width">Width <span class="label-hint">px</span></label>
+            <input id="width" type="number" min="256" max="1536" step="16" value="1024" />
+          </div>
+          <div class="field-group">
+            <label for="height">Height <span class="label-hint">px</span></label>
+            <input id="height" type="number" min="256" max="1536" step="16" value="1024" />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>Number of Images</label>
+          <div class="count-grid">
+            <button class="count-btn active" data-count="1">1</button>
+            <button class="count-btn" data-count="2">2</button>
+            <button class="count-btn" data-count="3">3</button>
+            <button class="count-btn" data-count="4">4</button>
+          </div>
+        </div>
+
+        <details class="advanced-settings">
+          <summary>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="adv-icon"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+            Advanced Settings
+            <svg class="adv-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </summary>
+          <div class="advanced-content">
+            <div class="field-group">
+              <label for="negative_prompt">Negative Prompt <span class="label-hint">optional</span></label>
+              <textarea id="negative_prompt" placeholder="blurry, low quality, watermark, deformed..."></textarea>
+            </div>
+
+            <div class="field-group">
+              <label for="model">Model</label>
+              <select id="model" class="model-select">
+                <option value="Z-Image-Turbo" selected>Z-Image-Turbo</option>
+              </select>
+            </div>
+
+            <div class="row">
+              <div class="field-group">
+                <label for="steps">Steps <span class="label-hint">1–30</span></label>
+                <input id="steps" type="number" min="1" max="30" step="1" value="9" />
+              </div>
+              <div class="field-group">
+                <label for="guidance">Guidance <span class="label-hint">0–20</span></label>
+                <input id="guidance" type="number" min="0" max="20" step="0.1" value="0.0" />
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="seed">Seed <span class="label-hint">−1 for random</span></label>
+              <input id="seed" type="number" step="1" value="-1" />
+            </div>
+          </div>
+        </details>
+
+        <button id="generate" class="btn-generate">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Generate Image
+          <kbd class="kbd-hint">Ctrl+↵</kbd>
+        </button>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+      </section>
+
+      <!-- RIGHT: output -->
+      <section class="card output-card" aria-label="Generated output">
+        <div class="out-head">
+          <strong class="out-title">Output</strong>
+          <div class="out-tools">
+            <button id="clear-btn" class="btn-secondary" type="button" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              Clear
+            </button>
+            <button id="download-btn" class="btn-secondary" type="button" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download All
+            </button>
+          </div>
+        </div>
+
+        <div id="progress-wrap" class="progress-wrap">
+          <div class="progress-meta">
+            <span class="progress-label">
+              <span class="progress-dot"></span>Generating…
+            </span>
+            <span id="progress-text">0%</span>
+          </div>
+          <div class="progress-track">
+            <div id="progress-fill" class="progress-fill"></div>
+          </div>
+        </div>
+
+        <div class="preview-grid" id="preview-grid">
+          <div class="ph">
+            <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" class="ph-icon"><rect x="4" y="8" width="40" height="32" rx="4" stroke="currentColor" stroke-width="2"/><circle cx="16" cy="20" r="4" stroke="currentColor" stroke-width="2"/><path d="M4 34 l10-10 8 8 6-6 16 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Your generated image will appear here.</span>
+            <small>Tip: press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> to generate</small>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ─── FOOTER ────────────────────────────────────────────────────── -->
+  <footer class="footer">
+    <span>TonAI Art &copy; 2026</span>
+    <span class="footer-sep">&bull;</span>
+    <span>Powered by local diffusion model</span>
+    <span class="footer-sep">&bull;</span>
+    <span>Made by <a href="https://tungedng2710.github.io/" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">tungedng2710</a></span>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
