@@ -2,6 +2,8 @@
 
 A fast and efficient AI-powered image generation API built with FastAPI and Diffusion Models. Generate high-quality images from text prompts using state-of-the-art diffusion models.
 
+🚀 **[Try the Live Demo](https://d674-27-66-108-30.ngrok-free.app/)**
+
 ## Features
 
 - **Fast Image Generation**: Powered by Z-Image-Turbo diffusion model
