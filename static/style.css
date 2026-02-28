@@ -335,6 +335,7 @@ textarea { min-height: 90px; resize: vertical; }
   white-space: nowrap;
   letter-spacing: .04em;
   text-transform: uppercase;
+  flex-basis: 100%;
 }
 .ex-chip {
   padding: 5px 12px;
@@ -350,7 +351,7 @@ textarea { min-height: 90px; resize: vertical; }
   width: auto; margin: 0; box-shadow: none;
   transition: background var(--trans), border-color var(--trans), color var(--trans), transform var(--trans);
   white-space: nowrap;
-  max-width: 220px;
+  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
