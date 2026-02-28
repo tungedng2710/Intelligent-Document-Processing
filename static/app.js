@@ -14,8 +14,6 @@ const progressFill   = $("progress-fill");
 const progressText   = $("progress-text");
 const promptEl       = $("prompt");
 const promptCounter  = $("prompt-counter");
-const historyBtn     = $("history-btn");
-const historyList    = $("history-dropdown");
 const themeToggle    = $("theme-toggle");
 const toastContainer = $("toast-container");
 
@@ -28,7 +26,6 @@ const MANUAL_MIN  = 256;
 const PRESET_MIN  = 1024;
 const MAX_SIZE    = 1536;
 const STEP        = 16;
-const HISTORY_MAX = 8;
 
 const PLACEHOLDER_HTML = `
   <div class="ph">
@@ -155,41 +152,7 @@ document.querySelectorAll(".ex-chip").forEach((chip) => {
   });
 });
 
-// ── PROMPT HISTORY ───────────────────────────────────────────────────
-// History is session-only; nothing is persisted to localStorage.
-function loadHistory() { return []; }
 
-function renderHistory() {
-  const hist = loadHistory();
-  if (!hist.length) { historyList.hidden = true; return; }
-  historyList.innerHTML = "";
-  hist.forEach((p) => {
-    const li = document.createElement("li");
-    li.textContent = p;
-    li.title = p;
-    li.addEventListener("click", () => {
-      promptEl.value = p;
-      updateCounter();
-      historyList.hidden = true;
-    });
-    historyList.appendChild(li);
-  });
-  // Clear history footer
-  const footer = document.createElement("li");
-  footer.className = "history-clear";
-  footer.textContent = "Clear history";
-  footer.addEventListener("click", (e) => { e.stopPropagation(); clearHistory(); });
-  historyList.appendChild(footer);
-  historyList.hidden = false;
-}
-historyBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-  if (!historyList.hidden) { historyList.hidden = true; return; }
-  renderHistory();
-});
-document.addEventListener("click", (e) => {
-  if (!historyList.contains(e.target) && e.target !== historyBtn) historyList.hidden = true;
-});
 
 // ── PROGRESS ─────────────────────────────────────────────────────────
 function updateProgress(v) {

@@ -281,44 +281,7 @@ textarea { min-height: 90px; resize: vertical; }
   color: var(--text);
   transform: scale(1.05);
 }
-.history-dropdown {
-  list-style: none;
-  border: var(--glass-border);
-  border-radius: 10px;
-  background: var(--surface);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: var(--shadow);
-  margin-top: 4px;
-  overflow: hidden;
-  max-height: 220px;
-  overflow-y: auto;
-}
-.history-dropdown li {
-  padding: 8px 12px;
-  font-size: 13px;
-  color: var(--text);
-  cursor: pointer;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: background var(--trans);
-  border-bottom: 1px solid var(--line);
-}
-.history-dropdown li:last-child { border-bottom: none; }
-.history-dropdown li:hover { background: var(--surface2); }
-.history-dropdown[hidden] { display: none; }
-.history-clear {
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  color: var(--danger) !important;
-  text-align: center;
-  border-top: 1px solid var(--line) !important;
-  border-bottom: none !important;
-  padding: 7px 12px !important;
-  opacity: .8;
-}
-.history-clear:hover { background: rgba(220,38,38,.07) !important; opacity: 1; }
+
 
 /* ── EXAMPLE PROMPTS ────────────────────────────────────────────────── */
 .example-prompts {
