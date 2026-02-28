@@ -138,3 +138,4 @@ Thumbs.db
 *.pth
 *.ckpt
 *.safetensors
+static/prompts.json

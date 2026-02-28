@@ -144,13 +144,25 @@ promptEl.addEventListener("input", updateCounter);
 updateCounter();
 
 // ── EXAMPLE PROMPT CHIPS ─────────────────────────────────────────────
-document.querySelectorAll(".ex-chip").forEach((chip) => {
-  chip.addEventListener("click", () => {
-    promptEl.value = chip.textContent.trim();
-    updateCounter();
-    promptEl.focus();
-  });
-});
+// Load example prompts from external JSON file
+fetch("/static/prompts.json")
+  .then((res) => res.json())
+  .then((prompts) => {
+    const container = document.querySelector(".example-prompts");
+    prompts.forEach((promptText) => {
+      const chip = document.createElement("button");
+      chip.className = "ex-chip";
+      chip.type = "button";
+      chip.textContent = promptText;
+      chip.addEventListener("click", () => {
+        promptEl.value = promptText;
+        updateCounter();
+        promptEl.focus();
+      });
+      container.appendChild(chip);
+    });
+  })
+  .catch((err) => console.error("Failed to load example prompts:", err));
 
 
 
