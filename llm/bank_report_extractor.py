@@ -153,6 +153,27 @@ def extract_from_image_ollama(
 # ---------------------------------------------------------------------------
 
 
+def _merge_extracted_data(pages_data: list[dict[str, Any] | list | str]) -> dict[str, Any]:
+    """
+    Merge extraction results from multiple pages into a single flat dict.
+
+    - Dict values from later pages overwrite earlier ones for scalar fields.
+    - List values with the same key are concatenated.
+    - Non-dict results are collected under a 'raw_pages' key.
+    """
+    merged: dict[str, Any] = {}
+    for page_result in pages_data:
+        if not isinstance(page_result, dict):
+            merged.setdefault("raw_pages", []).append(page_result)
+            continue
+        for key, value in page_result.items():
+            if key in merged and isinstance(merged[key], list) and isinstance(value, list):
+                merged[key].extend(value)
+            else:
+                merged[key] = value
+    return merged
+
+
 def extract_pdf(
     pdf_path: str | Path,
     model: str = DEFAULT_MODEL,
@@ -162,7 +183,7 @@ def extract_pdf(
     """
     Extract structured data from each page of a PDF using the bank report prompt.
 
-    Returns a dict with status and data.
+    Returns a dict with status and data (no page information).
     """
     prompt = _load_prompt()
     if document_type:
@@ -170,27 +191,28 @@ def extract_pdf(
 
     doc = fitz.open(str(pdf_path))
     page_count = doc.page_count
-    pages: list[dict[str, Any]] = []
+    pages_data: list[dict[str, Any] | list | str] = []
 
     for i in range(page_count):
         print(f"  Extracting page {i} / {page_count - 1} ...")
         png_bytes = _pdf_page_to_png(doc, i)
         b64 = _encode_image_bytes(png_bytes)
         result = extract_from_image_ollama(b64, model=model, ollama_url=ollama_url, prompt=prompt)
-        pages.append({"page": i, "data": result})
+        pages_data.append(result)
 
     doc.close()
 
-    # If single page, flatten
+    # Single page: return data directly
     if page_count == 1:
         return {
             "status": "success",
-            "data": pages[0]["data"],
+            "data": pages_data[0],
         }
 
+    # Multi-page: merge all pages into a single flat result
     return {
         "status": "success",
-        "data": pages,
+        "data": _merge_extracted_data(pages_data),
     }
 
 
