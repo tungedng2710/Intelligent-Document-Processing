@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""Minimal OpenAI-compatible client for SGLang server."""
+"""OpenAI-compatible client for SGLang server — including Qwen3-VL vision support."""
 
 from __future__ import annotations
 
 import argparse
+import base64
 import json
-from typing import Any, Dict, List, Optional
+import mimetypes
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 import requests
 
@@ -131,6 +134,140 @@ def sglang_chat_completion(
     return "".join(text_parts)
 
 
+def _encode_image(source: str) -> str:
+    """Return an OpenAI-compatible image_url string.
+
+    Accepts:
+    - A local file path  -> encoded as ``data:<mime>;base64,<b64>``
+    - An http/https URL  -> returned as-is
+    """
+    if source.startswith(("http://", "https://")):
+        return source
+
+    path = Path(source)
+    mime, _ = mimetypes.guess_type(str(path))
+    mime = mime or "image/jpeg"
+    data = base64.b64encode(path.read_bytes()).decode("utf-8")
+    return f"data:{mime};base64,{data}"
+
+
+def _build_vision_message(
+    prompt: str,
+    images: List[str],
+    role: str = "user",
+) -> Dict[str, Any]:
+    """Build an OpenAI-style message with interleaved image_url and text parts."""
+    content: List[Dict[str, Any]] = []
+    for img in images:
+        content.append({"type": "image_url", "image_url": {"url": _encode_image(img)}})
+    content.append({"type": "text", "text": prompt})
+    return {"role": role, "content": content}
+
+
+def sglang_vision_chat_completion(
+    prompt: str,
+    images: Union[str, List[str]],
+    model: Optional[str] = None,
+    base_url: str = "http://127.0.0.1:30000",
+    system_prompt: Optional[str] = None,
+    temperature: float = 0.0,
+    max_tokens: int = 1024,
+    stream: bool = True,
+    timeout: int = 180,
+    extra_body: Optional[Dict[str, Any]] = None,
+    print_stream: bool = True,
+) -> str:
+    """Call SGLang ``/v1/chat/completions`` with vision input (Qwen3-VL compatible).
+
+    Parameters
+    ----------
+    prompt:
+        Text instruction / question about the image(s).
+    images:
+        Path(s) to local image files **or** public http/https URLs.  A single
+        string is accepted and wrapped automatically.
+    model:
+        Model id.  If ``None`` the first model reported by the server is used.
+    base_url:
+        SGLang server base URL, e.g. ``http://127.0.0.1:30000``.
+    system_prompt:
+        Optional system message prepended to the conversation.
+    temperature:
+        Sampling temperature (0 = greedy).
+    max_tokens:
+        Maximum output tokens.
+    stream:
+        Whether to request SSE streaming.
+    timeout:
+        HTTP request timeout in seconds.
+    extra_body:
+        Extra fields merged into the request payload (e.g.
+        ``{"chat_template_kwargs": {"enable_thinking": False}}``).
+    print_stream:
+        Print tokens to stdout as they arrive.
+
+    Returns
+    -------
+    str
+        The full generated text.
+    """
+    if isinstance(images, str):
+        images = [images]
+
+    model_id = model
+    if not model_id:
+        available = list_models(base_url=base_url, timeout=timeout)
+        if not available:
+            raise RuntimeError(f"No models found at {base_url}/v1/models")
+        model_id = available[0]
+
+    messages: List[Dict[str, Any]] = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+
+    messages.append(_build_vision_message(prompt, images))
+
+    payload: Dict[str, Any] = {
+        "model": model_id,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+        "stream": stream,
+    }
+    if extra_body:
+        payload.update(extra_body)
+
+    endpoint = f"{base_url.rstrip('/')}/v1/chat/completions"
+    with requests.post(endpoint, json=payload, stream=True, timeout=timeout) as response:
+        response.raise_for_status()
+
+        text_parts: List[str] = []
+        content_type = response.headers.get("Content-Type", "")
+        if "text/event-stream" in content_type:
+            for chunk in _stream_sse_chunks(response):
+                content = _extract_text_from_chunk(chunk)
+                if content:
+                    if print_stream:
+                        print(content, end="", flush=True)
+                    text_parts.append(content)
+
+                choices = chunk.get("choices", [])
+                if choices and choices[0].get("finish_reason") is not None:
+                    break
+        else:
+            chunk = response.json()
+            content = _extract_text_from_chunk(chunk)
+            if content:
+                if print_stream:
+                    print(content, end="", flush=True)
+                text_parts.append(content)
+
+    if print_stream:
+        print()
+
+    return "".join(text_parts)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Test SGLang OpenAI-compatible chat API")
     parser.add_argument("--base-url", default="http://127.0.0.1:30000")
@@ -148,6 +285,15 @@ def main() -> None:
         "--disable-thinking",
         action="store_true",
         help="Set extra_body.chat_template_kwargs.enable_thinking=false (model-dependent).",
+    )
+    parser.add_argument(
+        "--image",
+        action="append",
+        dest="images",
+        default=None,
+        metavar="PATH_OR_URL",
+        help="Image path or URL to include in the request (vision mode). "
+             "Can be repeated for multiple images.",
     )
     args = parser.parse_args()
 
@@ -199,18 +345,33 @@ def main() -> None:
             history.append({"role": "assistant", "content": output})
         return
 
-    output = sglang_chat_completion(
-        prompt=args.prompt,
-        model=args.model,
-        base_url=args.base_url,
-        system_prompt=args.system_prompt,
-        temperature=args.temperature,
-        max_tokens=args.max_tokens,
-        stream=not args.no_stream,
-        timeout=args.timeout,
-        extra_body=extra_body,
-        print_stream=not args.quiet,
-    )
+    if args.images:
+        output = sglang_vision_chat_completion(
+            prompt=args.prompt,
+            images=args.images,
+            model=args.model,
+            base_url=args.base_url,
+            system_prompt=args.system_prompt,
+            temperature=args.temperature,
+            max_tokens=args.max_tokens,
+            stream=not args.no_stream,
+            timeout=args.timeout,
+            extra_body=extra_body,
+            print_stream=not args.quiet,
+        )
+    else:
+        output = sglang_chat_completion(
+            prompt=args.prompt,
+            model=args.model,
+            base_url=args.base_url,
+            system_prompt=args.system_prompt,
+            temperature=args.temperature,
+            max_tokens=args.max_tokens,
+            stream=not args.no_stream,
+            timeout=args.timeout,
+            extra_body=extra_body,
+            print_stream=not args.quiet,
+        )
 
     if args.quiet:
         print(output)
