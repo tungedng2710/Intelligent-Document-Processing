@@ -147,8 +147,8 @@ body {
 .grid {
   display: grid;
   gap: 18px;
-  grid-template-columns: 1fr 1.25fr 0.75fr;
-  align-items: stretch;
+  grid-template-columns: 1fr 0.75fr 1.25fr;
+  align-items: start;
 }
 
 /* ── CARD ────────────────────────────────────────────────────────────── */
@@ -163,9 +163,6 @@ body {
   transition: background var(--trans), border-color var(--trans), transform var(--trans);
   position: relative;
   overflow: hidden;
-  min-height: 700px;
-  display: flex;
-  flex-direction: column;
 }
 .card::before {
   content: '';
@@ -281,7 +278,44 @@ textarea { min-height: 90px; resize: vertical; }
   color: var(--text);
   transform: scale(1.05);
 }
-
+.history-dropdown {
+  list-style: none;
+  border: var(--glass-border);
+  border-radius: 10px;
+  background: var(--surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--shadow);
+  margin-top: 4px;
+  overflow: hidden;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.history-dropdown li {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background var(--trans);
+  border-bottom: 1px solid var(--line);
+}
+.history-dropdown li:last-child { border-bottom: none; }
+.history-dropdown li:hover { background: var(--surface2); }
+.history-dropdown[hidden] { display: none; }
+.history-clear {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--danger) !important;
+  text-align: center;
+  border-top: 1px solid var(--line) !important;
+  border-bottom: none !important;
+  padding: 7px 12px !important;
+  opacity: .8;
+}
+.history-clear:hover { background: rgba(220,38,38,.07) !important; opacity: 1; }
 
 /* ── EXAMPLE PROMPTS ────────────────────────────────────────────────── */
 .example-prompts {
@@ -298,7 +332,6 @@ textarea { min-height: 90px; resize: vertical; }
   white-space: nowrap;
   letter-spacing: .04em;
   text-transform: uppercase;
-  flex-basis: 100%;
 }
 .ex-chip {
   padding: 5px 12px;
@@ -314,7 +347,7 @@ textarea { min-height: 90px; resize: vertical; }
   width: auto; margin: 0; box-shadow: none;
   transition: background var(--trans), border-color var(--trans), color var(--trans), transform var(--trans);
   white-space: nowrap;
-  max-width: 200px;
+  max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -359,7 +392,9 @@ textarea { min-height: 90px; resize: vertical; }
 
 /* ── ADVANCED CARD ───────────────────────────────────────────────────── */
 .advanced-card {
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  height: 700px;
 }
 
 /* ── ADVANCED SETTINGS ───────────────────────────────────────────────── */
@@ -477,7 +512,9 @@ textarea { min-height: 90px; resize: vertical; }
 
 /* ── OUTPUT ──────────────────────────────────────────────────────────── */
 .output-card {
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  height: 700px;
 }
 .output-card .preview-grid {
   flex: 1;
