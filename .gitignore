@@ -176,3 +176,4 @@ web_outputs/
 services/
 llm/mini-sglang
 unsloth_compiled_cache/
+.pids/
