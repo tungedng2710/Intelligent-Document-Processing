@@ -25,6 +25,7 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+PIDLIST
 MANIFEST
 
 # PyInstaller
@@ -128,11 +129,27 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Model files (if large)
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+static/prompts.json
+
 # data and weights
 data
 runs
-*.pt
-*.pth
 *.jpg
 *.ipynb
 *.onnx
