@@ -25,7 +25,7 @@ from PIL import Image
 PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "bank_report_ver_1.1.txt"
 
 DEFAULT_OLLAMA_URL = "http://0.0.0.0:7860"
-DEFAULT_MODEL = "qwen3-vl:8b-instruct-bf16"
+DEFAULT_MODEL = "qwen3-vl:8b"
 DPI = 200  # Higher DPI for extraction accuracy
 
 
@@ -132,8 +132,8 @@ def extract_from_image_ollama(
         "stream": False,
         "options": {
             "temperature": 0.1,
-            "num_predict": 8192,
-            "num_ctx": 8000,
+            "num_predict": 4096,
+            "num_ctx": 4096,
         },
     }
 

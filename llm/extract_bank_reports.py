@@ -134,7 +134,7 @@ def extract_bank_report(
 async def parse_bank_report(
     file: UploadFile = File(...),
     prompt_path: str = "llm/prompts/bank_report_ver_1.0.txt",
-    model: str = "qwen3-vl:8b-instruct-bf16",
+    model: str = "qwen3-vl:8b",
     api_url: str = "http://0.0.0.0:7860/api/generate"
 ):
     """
@@ -299,7 +299,7 @@ Examples:
   python extract_bank_reports.py --batch-input data/bank_reports/ --batch-output results/
   
   # Process with custom model
-  python extract_bank_reports.py input.png -m qwen3-vl:8b-instruct-bf16 -o output.json
+  python extract_bank_reports.py input.png -m qwen3.5:27b -o output.json
         """
     )
     
@@ -355,8 +355,8 @@ Examples:
     )
     parser.add_argument(
         "-m", "--model",
-        default="qwen3-vl:8b-instruct-bf16",
-        help="Ollama model to use (default: qwen3-vl:8b-instruct-bf16)"
+        default="qwen3-vl:8b",
+        help="Ollama model to use (default: qwen3-vl:8b)"
     )
     parser.add_argument(
         "-u", "--url",

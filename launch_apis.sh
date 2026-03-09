@@ -17,7 +17,7 @@ PORT_EXTRACT=7872
 APP_CLASSIFY="app.app_document_classification_vlm.main:app"
 APP_EXTRACT="app.app_bank_report_extraction.main:app"
 
-REQUIRED_MODEL="qwen3-vl:8b-instruct-bf16"
+REQUIRED_MODEL="qwen3-vl:8b"
 
 PID_DIR="$SCRIPT_DIR/.pids"
 mkdir -p "$PID_DIR"

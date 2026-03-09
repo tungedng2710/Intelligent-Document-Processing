@@ -42,7 +42,7 @@ VALID_DOCUMENT_TYPES = [
 PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "document_classification.txt"
 
 DEFAULT_OLLAMA_URL = "http://0.0.0.0:7860"
-DEFAULT_MODEL = "qwen3-vl:8b-instruct-bf16"
+DEFAULT_MODEL = "qwen3-vl:8b"
 DPI = 150  # Resolution for rendering PDF pages to images
 
 
