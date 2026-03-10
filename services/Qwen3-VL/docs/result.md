@@ -1,0 +1,680 @@
+<text_block>
+BILL OF LADING
+</text_block>
+<text_block>
+Page 1 of
+</text_block>
+<text_block>
+## Date:
+</text_block>
+<text_block>
+## SHIP FROM
+Name: 
+Address: 
+City/State/Zip: 
+SID#: 
+FOB: 
+</text_block>
+<text_block>
+## Bill of Lading Number:
+</text_block>
+<text_block>
+BAR CODE SPACE
+</text_block>
+<text_block>
+## SHIP TO
+Name: 
+Location #: 
+Address: 
+City/State/Zip: 
+CID#: 
+FOB: 
+</text_block>
+<text_block>
+## CARRIER NAME:
+</text_block>
+<text_block>
+## Trailer number:
+</text_block>
+<text_block>
+## Seal number(s):
+</text_block>
+<text_block>
+## SCAC:
+</text_block>
+<text_block>
+## Pro number:
+</text_block>
+<text_block>
+BAR CODE SPACE
+</text_block>
+<text_block>
+## THIRD PARTY FREIGHT CHARGES BILL TO:
+Name: 
+Address: 
+City/State/Zip: 
+</text_block>
+<text_block>
+## SPECIAL INSTRUCTIONS:
+</text_block>
+<text_block>
+## Freight Charge Terms: (freight charges are prepaid unless marked otherwise)
+Prepaid  Collect  3rd Party 
+</text_block>
+<text_block>
+Master Bill of Lading: with attached underlying Bills of Lading (check box)
+</text_block>
+<table_block>
+## CUSTOMER ORDER INFORMATION
+<table>
+  <thead>
+    <tr>
+    <th>CUSTOMER ORDER NUMBER</th>
+    <th># PKGS</th>
+    <th>WEIGHT</th>
+    <th colspan="2">PALLET/SLIP (CIRCLE ONE)</th>
+    <th>ADDITIONAL SHIPPER INFO</th>
+    </tr>
+  </thead>
+  <tbody>
+  <tr><td></td><td></td><td></td><td>Y</td><td>N</td><td></td></tr>
+  <tr><td></td><td></td><td></td><td>Y</td><td>N</td><td></td></tr>
+  <tr><td></td><td></td><td></td><td>Y</td><td>N</td><td></td></tr>
+  <tr><td></td><td></td><td></td><td>Y</td><td>N</td><td></td></tr>
+  <tr><td></td><td></td><td></td><td>Y</td><td>N</td><td></td></tr>
+  <tr><td></td><td></td><td></td><td>Y</td><td>N</td><td></td></tr>
+  <tr><td></td><td></td><td></td><td>Y</td><td>N</td><td></td></tr>
+  <tr><td></td><td></td><td></td><td>Y</td><td>N</td><td></td></tr>
+  <tr>
+    <td>GRAND TOTAL</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+  </tbody>
+</table>
+</table_block>
+<table_block>
+## CARRIER INFORMATION
+<table>
+  <thead>
+    <tr>
+    <th colspan="2">HANDLING UNIT</th>
+    <th colspan="2">PACKAGE</th>
+    <th rowspan="2">WEIGHT</th>
+    <th rowspan="2">H.M. (X)</th>
+    <th rowspan="2">COMMODITY DESCRIPTION<br>Commodities requiring special or additional care or attention in handling or stowing must be so marked and packaged as to ensure safe transportation with ordinary care.<br>See Section 2(e) of NMFC Item 360</th>
+    <th colspan="2">LTL ONLY</th>
+    </tr>
+    <tr>
+    <th>QTY</th>
+    <th>TYPE</th>
+    <th>QTY</th>
+    <th>TYPE</th>
+    <th>NMFC #</th>
+    <th>CLASS</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    </tr>
+    <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <

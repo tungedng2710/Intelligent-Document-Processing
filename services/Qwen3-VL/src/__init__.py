@@ -1,0 +1,2 @@
+"""Qwen3-VL Document Parser - Main Package"""
+__version__ = "1.0.0"
