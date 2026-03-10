@@ -173,7 +173,19 @@ extractor/paddle
 web_uploads/
 web_outputs/
 
-services/
+services/*
+!services/Qwen3-VL/
+
+# Un-ignore file types for services/Qwen3-VL (overridden by its own .gitignore)
+!services/Qwen3-VL/**/*.md
+!services/Qwen3-VL/**/*.json
+!services/Qwen3-VL/**/*.sh
+!services/Qwen3-VL/**/*.txt
+!services/Qwen3-VL/**/*.yml
+!services/Qwen3-VL/**/*.yaml
+!services/Qwen3-VL/**/*.log
+!services/Qwen3-VL/.gitignore
+
 llm/mini-sglang
 unsloth_compiled_cache/
 .pids/
