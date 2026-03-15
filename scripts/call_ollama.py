@@ -159,8 +159,8 @@ def main():
     parser.add_argument(
         "--prompt",
         type=str,
-        required=True,
-        help="Path to prompt .txt file",
+        default=None,
+        help="Path to prompt .txt file (if omitted, sends image without a text prompt)",
     )
     parser.add_argument(
         "--model",
@@ -181,11 +181,15 @@ def main():
         logger.error(f"Data path not found: {data_path}")
         sys.exit(1)
 
-    prompt_path = Path(args.prompt)
-    if not prompt_path.is_file():
-        logger.error(f"Prompt file not found: {prompt_path}")
-        sys.exit(1)
-    prompt_text = prompt_path.read_text(encoding="utf-8").strip()
+    if args.prompt:
+        prompt_path = Path(args.prompt)
+        if not prompt_path.is_file():
+            logger.error(f"Prompt file not found: {prompt_path}")
+            sys.exit(1)
+        prompt_text = prompt_path.read_text(encoding="utf-8").strip()
+    else:
+        prompt_text = "Extract all text and structured data from this document image."
+        logger.info("No prompt file specified, using default prompt")
 
     base_url = f"http://{args.port}"
 
@@ -207,7 +211,7 @@ def main():
         sys.exit(1)
 
     logger.info(f"Found {len(folders)} category folders: {[f.name for f in folders]}")
-    logger.info(f"Model: {args.model} | Prompt: {prompt_path.name}")
+    logger.info(f"Model: {args.model} | Prompt: {args.prompt or 'default'}")
 
     # Process each folder
     summary = []
