@@ -11,8 +11,7 @@ Usage:
     python scripts/md_to_json.py \
         --data_path data/r3_bank_reports/train_data_v1.2
 
-    # Process a single category
-    python scripts/md_to_json.py \
+    # Process a single category 
         --data_path data/r3_bank_reports/train_data_v1.2 \
         --category giay_rut_tien
 
