@@ -38,11 +38,12 @@ def main():
     parser.add_argument("--host", default=None, help="API bind host")
     parser.add_argument("--ocr-port", type=int, default=None, help="OCR API port (default 7871)")
     parser.add_argument("--llm-port", type=int, default=None, help="LLM API port (default 7872)")
+    parser.add_argument("--wrapper-port", type=int, default=None, help="Wrapper API port (default 7873)")
     parser.add_argument(
         "--service",
-        choices=["ocr", "llm", "both"],
+        choices=["ocr", "llm", "wrapper", "both", "all"],
         default="both",
-        help="Which service to start (default: both)",
+        help="Which service(s) to start (default: both = ocr+llm; all = ocr+llm+wrapper)",
     )
     args = parser.parse_args()
 
@@ -60,19 +61,30 @@ def main():
     host = args.host or config.API_HOST
     ocr_port = args.ocr_port or config.OCR_API_PORT
     llm_port = args.llm_port or config.LLM_API_PORT
+    wrapper_port = args.wrapper_port or config.WRAPPER_API_PORT
 
     if args.service == "ocr":
         _run_uvicorn("pipelines.doc2md2json.api:ocr_app", host, ocr_port)
     elif args.service == "llm":
         _run_uvicorn("pipelines.doc2md2json.api:llm_app", host, llm_port)
+    elif args.service == "wrapper":
+        _run_uvicorn("pipelines.doc2md2json.api:wrapper_app", host, wrapper_port)
     else:
-        # Start both in parallel — OCR in a background thread, LLM in main thread
+        # "both" = ocr + llm (original behaviour)
+        # "all"  = ocr + llm + wrapper
         ocr_thread = threading.Thread(
             target=_run_uvicorn,
             args=("pipelines.doc2md2json.api:ocr_app", host, ocr_port),
             daemon=True,
         )
         ocr_thread.start()
+        if args.service == "all":
+            wrapper_thread = threading.Thread(
+                target=_run_uvicorn,
+                args=("pipelines.doc2md2json.api:wrapper_app", host, wrapper_port),
+                daemon=True,
+            )
+            wrapper_thread.start()
         _run_uvicorn("pipelines.doc2md2json.api:llm_app", host, llm_port)
 
 
