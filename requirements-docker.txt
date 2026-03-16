@@ -1,0 +1,26 @@
+# ── IDP Pipeline — Docker Python requirements ─────────────────────────────────
+# torch / torchvision are installed separately in the Dockerfile via
+#   --index-url https://download.pytorch.org/whl/cu126
+# so they are NOT listed here.
+
+# ── Web framework ──────────────────────────────────────────────────────────────
+fastapi==0.120.1
+uvicorn[standard]==0.38.0
+python-multipart==0.0.20
+
+# ── PDF / Image processing ─────────────────────────────────────────────────────
+pillow==10.4.0
+numpy==2.1.2
+PyMuPDF==1.26.6
+
+# ── OCR — Marker (default engine) ─────────────────────────────────────────────
+marker-pdf==1.10.2
+
+# ── OCR — PaddleOCR (fallback, OCR_ENGINE=ollama still uses paddleocr utils) ──
+paddleocr==3.3.0
+
+# ── LLM / Ollama client ────────────────────────────────────────────────────────
+requests==2.32.3
+
+# ── GPU monitoring ─────────────────────────────────────────────────────────────
+nvidia-ml-py
