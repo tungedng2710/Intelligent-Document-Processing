@@ -1,12 +1,20 @@
 """
 Call Ollama vision model on bank report images and save predictions.
 
-Usage:
+Usage (folder mode):
     python scripts/call_ollama.py \
         --data_path data/r3_bank_reports/train_data_v1.2 \
         --prompt data/prompts/bank_report_ver_1.0.txt \
         --model qwen3.5:2b-bf16 \
         --port 0.0.0.0:7860
+
+Usage (single image mode):
+    python scripts/call_ollama.py \
+        --image path/to/image.png \
+        --prompt data/prompts/bank_report_ver_1.0.txt \
+        --model qwen3.5:2b-bf16 \
+        --port 0.0.0.0:7860 \
+        --output result.json   # optional
 """
 
 import argparse
@@ -148,8 +156,66 @@ def process_folder(
     return {"folder": folder.name, "processed": processed, "errors": errors}
 
 
+def process_single_image(
+    image_path: Path,
+    prompt_text: str,
+    model: str,
+    base_url: str,
+    output_path: Path | None = None,
+) -> None:
+    """Process a single image and print (and optionally save) the result."""
+    logger.info(f"Processing single image: {image_path}")
+    t0 = time.time()
+    response = call_ollama_chat(image_path, prompt_text, model, base_url)
+    elapsed = time.time() - t0
+
+    content = response.get("message", {}).get("content", "")
+
+    prediction = {
+        "image": str(image_path),
+        "model": model,
+        "content": content,
+        "elapsed_seconds": round(elapsed, 2),
+    }
+
+    # Try to parse the content as JSON for a structured field
+    try:
+        parsed = json.loads(content)
+        prediction["parsed_json"] = parsed
+    except (json.JSONDecodeError, TypeError):
+        stripped = content.strip()
+        if stripped.startswith("```"):
+            lines = stripped.split("\n")
+            json_str = "\n".join(lines[1:-1]) if len(lines) > 2 else ""
+            try:
+                parsed = json.loads(json_str)
+                prediction["parsed_json"] = parsed
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+    print(json.dumps(prediction, ensure_ascii=False, indent=2))
+    logger.info(f"Completed in {elapsed:.1f}s")
+
+    if output_path is not None:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps(prediction, ensure_ascii=False, indent=2))
+        logger.info(f"Saved to {output_path}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Call Ollama on bank report images")
+    parser.add_argument(
+        "--image",
+        type=str,
+        default=None,
+        help="Path to a single image file to process (mutually exclusive with --data_path)",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default=None,
+        help="(Single-image mode) Path to save the JSON result",
+    )
     parser.add_argument(
         "--data_path",
         type=str,
@@ -165,7 +231,7 @@ def main():
     parser.add_argument(
         "--model",
         type=str,
-        default="qwen3.5:2b-bf16",
+        default="qwen3-vl:8b-instruct-bf16",
         help="Ollama model name",
     )
     parser.add_argument(
@@ -175,11 +241,6 @@ def main():
         help="Ollama host:port (e.g. 0.0.0.0:7860)",
     )
     args = parser.parse_args()
-
-    data_path = Path(args.data_path)
-    if not data_path.is_dir():
-        logger.error(f"Data path not found: {data_path}")
-        sys.exit(1)
 
     if args.prompt:
         prompt_path = Path(args.prompt)
@@ -200,6 +261,36 @@ def main():
         logger.info(f"Ollama reachable at {base_url} — version {r.json().get('version')}")
     except Exception as exc:
         logger.error(f"Cannot reach Ollama at {base_url}: {exc}")
+        sys.exit(1)
+
+    # ── Single-image mode ────────────────────────────────────────────────────
+    if args.image:
+        image_path = Path(args.image)
+        if not image_path.is_file():
+            logger.error(f"Image file not found: {image_path}")
+            sys.exit(1)
+        if image_path.suffix.lower() not in IMAGE_EXTENSIONS:
+            logger.warning(
+                f"Unrecognised extension '{image_path.suffix}'; proceeding anyway"
+            )
+        output_path = Path(args.output) if args.output else None
+        try:
+            process_single_image(image_path, prompt_text, args.model, base_url, output_path)
+        except requests.exceptions.Timeout:
+            logger.error("TIMEOUT while calling Ollama")
+            sys.exit(1)
+        except requests.exceptions.ConnectionError:
+            logger.error(f"CONNECTION ERROR — is Ollama running at {base_url}?")
+            sys.exit(1)
+        except Exception as exc:
+            logger.error(f"ERROR: {exc}")
+            sys.exit(1)
+        return
+
+    # ── Folder mode ──────────────────────────────────────────────────────────
+    data_path = Path(args.data_path)
+    if not data_path.is_dir():
+        logger.error(f"Data path not found: {data_path}")
         sys.exit(1)
 
     # Discover category folders (those with images/ subdirectories)
