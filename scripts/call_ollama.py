@@ -1,5 +1,5 @@
 """
-Call Ollama vision model on bank report images and save predictions.
+Call Ollama vision model on document images and save predictions.
 
 Usage (folder mode):
     python scripts/call_ollama.py \
@@ -8,9 +8,9 @@ Usage (folder mode):
         --model qwen3.5:2b-bf16 \
         --port 0.0.0.0:7860
 
-Usage (single image mode):
+Usage (single or multi-page image mode):
     python scripts/call_ollama.py \
-        --image path/to/image.png \
+        --images page1.png page2.png \
         --prompt data/prompts/bank_report_ver_1.0.txt \
         --model qwen3.5:2b-bf16 \
         --port 0.0.0.0:7860 \
@@ -41,14 +41,14 @@ def encode_image_base64(image_path: Path) -> str:
 
 
 def call_ollama_chat(
-    image_path: Path,
+    image_paths: list[Path],
     prompt_text: str,
     model: str,
     base_url: str,
     timeout: int = 300,
 ) -> dict:
-    """Send an image + prompt to Ollama /api/chat and return the parsed response."""
-    img_b64 = encode_image_base64(image_path)
+    """Send one or more images + prompt to Ollama /api/chat and return the parsed response."""
+    images_b64 = [encode_image_base64(p) for p in image_paths]
 
     payload = {
         "model": model,
@@ -56,7 +56,7 @@ def call_ollama_chat(
             {
                 "role": "user",
                 "content": prompt_text,
-                "images": [img_b64],
+                "images": images_b64,
             }
         ],
         "stream": False,
@@ -109,7 +109,7 @@ def process_folder(
         logger.info(f"[{folder.name}] Processing {img_path.name} ...")
         t0 = time.time()
         try:
-            response = call_ollama_chat(img_path, prompt_text, model, base_url)
+            response = call_ollama_chat([img_path], prompt_text, model, base_url)
             elapsed = time.time() - t0
 
             content = response.get("message", {}).get("content", "")
@@ -156,23 +156,23 @@ def process_folder(
     return {"folder": folder.name, "processed": processed, "errors": errors}
 
 
-def process_single_image(
-    image_path: Path,
+def process_images(
+    image_paths: list[Path],
     prompt_text: str,
     model: str,
     base_url: str,
     output_path: Path | None = None,
 ) -> None:
-    """Process a single image and print (and optionally save) the result."""
-    logger.info(f"Processing single image: {image_path}")
+    """Process one or more images (pages) and print (and optionally save) the result."""
+    logger.info(f"Processing {len(image_paths)} image(s): {[str(p) for p in image_paths]}")
     t0 = time.time()
-    response = call_ollama_chat(image_path, prompt_text, model, base_url)
+    response = call_ollama_chat(image_paths, prompt_text, model, base_url)
     elapsed = time.time() - t0
 
     content = response.get("message", {}).get("content", "")
 
     prediction = {
-        "image": str(image_path),
+        "images": [str(p) for p in image_paths],
         "model": model,
         "content": content,
         "elapsed_seconds": round(elapsed, 2),
@@ -205,16 +205,17 @@ def process_single_image(
 def main():
     parser = argparse.ArgumentParser(description="Call Ollama on bank report images")
     parser.add_argument(
-        "--image",
+        "--images",
         type=str,
+        nargs="+",
         default=None,
-        help="Path to a single image file to process (mutually exclusive with --data_path)",
+        help="Path(s) to one or more image files (pages) to process (mutually exclusive with --data_path)",
     )
     parser.add_argument(
         "--output",
         type=str,
         default=None,
-        help="(Single-image mode) Path to save the JSON result",
+        help="Path to save the JSON result",
     )
     parser.add_argument(
         "--data_path",
@@ -263,19 +264,22 @@ def main():
         logger.error(f"Cannot reach Ollama at {base_url}: {exc}")
         sys.exit(1)
 
-    # ── Single-image mode ────────────────────────────────────────────────────
-    if args.image:
-        image_path = Path(args.image)
-        if not image_path.is_file():
-            logger.error(f"Image file not found: {image_path}")
-            sys.exit(1)
-        if image_path.suffix.lower() not in IMAGE_EXTENSIONS:
-            logger.warning(
-                f"Unrecognised extension '{image_path.suffix}'; proceeding anyway"
-            )
+    # ── Image(s) mode ─────────────────────────────────────────────────────────
+    if args.images:
+        image_paths = []
+        for img_str in args.images:
+            p = Path(img_str)
+            if not p.is_file():
+                logger.error(f"Image file not found: {p}")
+                sys.exit(1)
+            if p.suffix.lower() not in IMAGE_EXTENSIONS:
+                logger.warning(
+                    f"Unrecognised extension '{p.suffix}'; proceeding anyway"
+                )
+            image_paths.append(p)
         output_path = Path(args.output) if args.output else None
         try:
-            process_single_image(image_path, prompt_text, args.model, base_url, output_path)
+            process_images(image_paths, prompt_text, args.model, base_url, output_path)
         except requests.exceptions.Timeout:
             logger.error("TIMEOUT while calling Ollama")
             sys.exit(1)
