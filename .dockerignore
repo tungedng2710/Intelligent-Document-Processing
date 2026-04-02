@@ -1,4 +1,20 @@
-# Byte-compiled / optimized / DLL files
+# ── Project-specific large / sensitive directories ────────────────────────────
+# Training data, benchmark datasets, raw uploads — not needed inside the image
+data/
+logs/
+services/
+test_scripts/
+scripts/
+# r2/r3 experiment artefacts
+data/r2_bill_of_lading/
+data/r3_bank_reports/
+data/benchmarks/
+data/outputs/
+data/test_samples/
+# webui static assets
+webui/
+
+# ── Byte-compiled / optimized / DLL files ─────────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
