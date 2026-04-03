@@ -59,7 +59,7 @@ def call_ollama_chat(
                 "images": images_b64,
             }
         ],
-        "stream": True,
+        "stream": False,
         "options": {
             "temperature": 0.7,
             "top_p": 0.8,
