@@ -43,21 +43,23 @@ Act as a **Layout transcriber**. Do not interpret meanings, do not correct spell
 ### 3. Visual Element Handling
 
 #### 3a. Checkboxes and Option Groups
-Checkboxes appear as small squares `□` or printed boxes that may contain a mark (`X`, `✓`, `✗`, a filled square, or any handwritten check). Apply these rules:
+Checkboxes appear as small squares `□` or printed boxes that may contain a mark (`X`, `✓`, `✗`, a filled square, or any handwritten check).
+
+**Universal Rule:** Every individual checkbox is represented as `"<box label>": true` if marked, or `"<box label>": false` if unmarked. Use the label text (including any numbering prefix) exactly as printed.
 
 * **Option group (mutually exclusive choices):**
     * Definition: Two or more labeled checkboxes presented as alternatives on the same line or in a visually grouped cluster (e.g., `1. Nam □  2. Nữ □`, `1. Cấp cứu □  2. KKB □  3. Khoa điều trị □`).
-    * Representation: Use the label text (including any numbering prefix) as the JSON key. The value must be the **label text of the selected option** (whichever box is marked). If none is marked, use `null`. If multiple are marked, use an array of their label texts.
-    * Example: `"3. Giới:": "2. Nữ"`, `"13. Trực tiếp vào": "3. Khoa điều trị"`.
+    * Representation: Nest all options as sibling keys under the group label object, each as a `"label": true/false` pair.
+    * Example: `"3. Giới:": {"1. Nam": false, "2. Nữ": true}`, `"13. Trực tiếp vào": {"1. Cấp cứu": false, "2. KKB": false, "3. Khoa điều trị": true}`.
 
 * **Standalone checkbox (single boolean field):**
     * Definition: A single checkbox associated with one label, not part of a mutually exclusive group (e.g., `BHYT □`, `Có □`).
-    * Representation: Use the label text as the JSON key. The value is `true` if marked, `false` if unmarked.
-    * Example: `"BHYT": true`.
+    * Representation: `"BHYT": true` or `"BHYT": false`.
 
 * **Checkbox with attached sub-value:**
-    * Definition: A checkbox option that, when selected, implies an additional written value on the same line (e.g., `X Khác: ____`).
-    * Representation: Use the option label as the key and the written sub-value as the value string. If no sub-value is written, use `true`.
+    * Definition: A checkbox option that, when selected, implies an additional written value on the same line (e.g., `X Khác: Tiểu đường`).
+    * Representation: When checked and a sub-value is present, use the sub-value string as the value. When checked with no sub-value, use `true`. When unchecked, use `false`.
+    * Example: `"Khác:": "Tiểu đường"` (checked with sub-value), `"Khác:": false` (unchecked).
 
 #### 3b. Segmented / Individual-Cell Boxes
 Some fields render each character (digit or letter) in its own small printed box or cell (common for dates, IDs, and codes).
@@ -98,6 +100,11 @@ Some fields render each character (digit or letter) in its own small printed box
 * Extract values exactly as written (handwritten or typed).
 * If a visual field (line, box, space) exists but contains no content, return `null`.
 * **Numeric-only segmented fields** (e.g., box-per-digit fields): return as a string, not a number, to preserve leading zeros.
+* **Datetime normalization:** All date and time values must be converted to a unified format regardless of how they appear on the document:
+    * Date only → `"YYYY-MM-DD"` (e.g., `"1956-01-16"`).
+    * Time only → `"HH:MM"` (e.g., `"14:30"`).
+    * Date and time combined → `"YYYY-MM-DD HH:MM"` (e.g., `"2023-09-01 08:00"`).
+    * If a component (day, month, year, hour, minute) is missing or illegible, substitute `null` for the entire field value.
 
 ---
 
