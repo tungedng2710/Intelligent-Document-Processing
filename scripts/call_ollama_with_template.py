@@ -1,12 +1,22 @@
+import argparse
 import json
 import base64
 from pathlib import Path
 import requests
 
+parser = argparse.ArgumentParser(description="Call Ollama with a prompt template and image.")
+parser.add_argument("--prompt-template", required=True, help="Path to the prompt template .txt file")
+parser.add_argument("--json-template", required=True, help="Path to the JSON template file")
+parser.add_argument("--image", required=True, help="Path to the input image file")
+parser.add_argument("--output-dir", required=True, help="Directory to save the output JSON")
+parser.add_argument("--model", default="gemma4:e4b-it-bf16", help="Ollama model name")
+parser.add_argument("--host", default="http://0.0.0.0:7860", help="Ollama host URL")
+args = parser.parse_args()
+
 # --- Load inputs ---
-prompt_template = Path("/root/tungn197/idp/data/prompts/healthcare_types/prompt_with_template.txt").read_text()
-json_template   = json.load(open("/root/tungn197/idp/data/prompts/healthcare_types/page-03-template.json"))
-image_path      = Path("/root/tungn197/idp/data/healthcare/hoso1_pages/page-03.png")
+prompt_template = Path(args.prompt_template).read_text()
+json_template   = json.load(open(args.json_template))
+image_path      = Path(args.image)
 
 # --- Inject template into prompt ---
 prompt = prompt_template.replace(
@@ -19,7 +29,7 @@ image_b64 = base64.b64encode(image_path.read_bytes()).decode()
 
 # --- Call Ollama ---
 payload = {
-    "model": "gemma4:e4b-it-bf16",
+    "model": args.model,
     "messages": [{"role": "user", "content": prompt, "images": [image_b64]}],
     "stream": False,
     "options": {
@@ -32,7 +42,7 @@ payload = {
         },   # low temp for structured extraction
 }
 
-resp = requests.post("http://0.0.0.0:7860/api/chat", json=payload, timeout=300)
+resp = requests.post(f"{args.host}/api/chat", json=payload, timeout=300)
 resp.raise_for_status()
 
 content = resp.json()["message"]["content"]
@@ -45,7 +55,7 @@ except json.JSONDecodeError:
     lines = content.strip().split("\n")
     result = json.loads("\n".join(lines[1:-1]))
 
-output_path = Path("/root/tungn197/idp/data/healthcare/hoso1_pred") / image_path.with_suffix(".json").name
+output_path = Path(args.output_dir) / image_path.with_suffix(".json").name
 output_path.parent.mkdir(parents=True, exist_ok=True)
 output_path.write_text(json.dumps(result, ensure_ascii=False, indent=2))
 print(f"Saved to {output_path}")

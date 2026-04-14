@@ -13,12 +13,12 @@ Summary metrics:
   - filled_accuracy  : accuracy when GT value is non-empty
 
 Usage:
-    python scripts/eval_healthcare_prediction.py \
+    python scripts/eval_json.py \
         --gt   data/healthcare/hoso1_annotations/page-03.json \
         --pred data/healthcare/hoso1_annotations/prediction_page-03.json
 
     # Save detailed results:
-    python scripts/eval_healthcare_prediction.py \
+    python scripts/eval_json.py \
         --gt   data/healthcare/hoso1_annotations/page-03.json \
         --pred data/healthcare/hoso1_annotations/prediction_page-03.json \
         --output data/outputs/metrics/eval_page-03.json
