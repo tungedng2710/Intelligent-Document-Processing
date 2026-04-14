@@ -4,8 +4,8 @@ from pathlib import Path
 import requests
 
 # --- Load inputs ---
-prompt_template = Path("/root/tungn197/idp/data/prompts/healthcare_types/phieu_kham_benh_vao_vien.txt").read_text()
-json_template   = json.load(open("/root/tungn197/idp/data/prompts/healthcare_types/phieu_kham_benh_vao_vien_template.json"))
+prompt_template = Path("/root/tungn197/idp/data/prompts/healthcare_types/prompt_with_template.txt").read_text()
+json_template   = json.load(open("/root/tungn197/idp/data/prompts/healthcare_types/page-03-template.json"))
 image_path      = Path("/root/tungn197/idp/data/healthcare/hoso1_pages/page-03.png")
 
 # --- Inject template into prompt ---
@@ -19,11 +19,11 @@ image_b64 = base64.b64encode(image_path.read_bytes()).decode()
 
 # --- Call Ollama ---
 payload = {
-    "model": "qwen3.5:cloud",
+    "model": "gemma4:e4b-it-bf16",
     "messages": [{"role": "user", "content": prompt, "images": [image_b64]}],
     "stream": False,
     "options": {
-            "temperature": 0.7,
+            "temperature": 0.1,
             "top_p": 0.8,
             "top_k": 20,
             "min_p": 0.0,
@@ -45,7 +45,8 @@ except json.JSONDecodeError:
     lines = content.strip().split("\n")
     result = json.loads("\n".join(lines[1:-1]))
 
-output_path = image_path.with_suffix(".json")
+output_path = Path("/root/tungn197/idp/data/healthcare/hoso1_pred") / image_path.with_suffix(".json").name
+output_path.parent.mkdir(parents=True, exist_ok=True)
 output_path.write_text(json.dumps(result, ensure_ascii=False, indent=2))
 print(f"Saved to {output_path}")
 print(json.dumps(result, ensure_ascii=False, indent=2))
