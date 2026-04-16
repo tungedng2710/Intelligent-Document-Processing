@@ -32,6 +32,7 @@ payload = {
     "model": args.model,
     "messages": [{"role": "user", "content": prompt, "images": [image_b64]}],
     "stream": False,
+    "think": False,
     "options": {
             "temperature": 0.1,
             "top_p": 0.8,
@@ -39,10 +40,11 @@ payload = {
             "min_p": 0.0,
             "presence_penalty": 1.5,
             "repeat_penalty": 1.0,
-        },   # low temp for structured extraction
+            "think": False,
+        },  # low temp for structured extraction
 }
 
-resp = requests.post(f"{args.host}/api/chat", json=payload, timeout=300)
+resp = requests.post(f"{args.host}/api/chat", json=payload, timeout=500)
 resp.raise_for_status()
 
 content = resp.json()["message"]["content"]

@@ -13,15 +13,21 @@ Summary metrics:
   - filled_accuracy  : accuracy when GT value is non-empty
 
 Usage:
+    # Single file mode:
     python scripts/eval_json.py \
         --gt   data/healthcare/hoso1_annotations/page-03.json \
         --pred data/healthcare/hoso1_annotations/prediction_page-03.json
 
+    # Folder mode (evaluate all matching JSON files and compute averages):
+    python scripts/eval_json.py \
+        --gt-dir   data/healthcare/hoso1_annotations/ \
+        --pred-dir data/healthcare/hoso1_predictions/
+
     # Save detailed results:
     python scripts/eval_json.py \
-        --gt   data/healthcare/hoso1_annotations/page-03.json \
-        --pred data/healthcare/hoso1_annotations/prediction_page-03.json \
-        --output data/outputs/metrics/eval_page-03.json
+        --gt-dir   data/healthcare/hoso1_annotations/ \
+        --pred-dir data/healthcare/hoso1_predictions/ \
+        --output data/outputs/metrics/eval_folder.json
 """
 
 from __future__ import annotations
@@ -227,30 +233,174 @@ def print_report(result: dict, gt_path: str, pred_path: str) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Folder evaluation
+# ---------------------------------------------------------------------------
+
+def evaluate_folders(gt_dir: Path, pred_dir: Path) -> dict:
+    """Evaluate all JSON files in gt_dir that have a matching file in pred_dir."""
+    gt_files = sorted(gt_dir.glob("*.json"))
+    if not gt_files:
+        raise FileNotFoundError(f"No JSON files found in {gt_dir}")
+
+    per_file_results: dict[str, dict] = {}
+    matched = 0
+    skipped: list[str] = []
+
+    for gt_file in gt_files:
+        pred_file = pred_dir / gt_file.name
+        if not pred_file.exists():
+            skipped.append(gt_file.name)
+            continue
+
+        gt   = json.loads(gt_file.read_text(encoding="utf-8"))
+        pred = json.loads(pred_file.read_text(encoding="utf-8"))
+        result = evaluate(gt, pred)
+        per_file_results[gt_file.name] = result
+        matched += 1
+
+    if matched == 0:
+        raise FileNotFoundError(
+            f"No matching prediction files found in {pred_dir} "
+            f"for GT files in {gt_dir}"
+        )
+
+    # Compute averages across all file summaries
+    sum_keys = [
+        "total_gt_fields", "exact_matches", "partial_matches",
+        "wrong_fields", "missing_fields", "extra_fields_in_pred",
+    ]
+    avg_keys = [
+        "field_accuracy", "mean_similarity",
+        "null_field_accuracy", "filled_field_accuracy",
+    ]
+
+    totals = {k: 0 for k in sum_keys}
+    avg_accum = {k: [] for k in avg_keys}
+
+    for r in per_file_results.values():
+        s = r["summary"]
+        for k in sum_keys:
+            totals[k] += s[k]
+        for k in avg_keys:
+            if s[k] is not None:
+                avg_accum[k].append(s[k])
+
+    avg_summary = {}
+    for k in sum_keys:
+        avg_summary[k] = totals[k]
+    for k in avg_keys:
+        vals = avg_accum[k]
+        avg_summary[k] = round(sum(vals) / len(vals), 4) if vals else None
+
+    avg_summary["num_files_evaluated"] = matched
+    avg_summary["num_files_skipped"] = len(skipped)
+
+    return {
+        "average_summary": avg_summary,
+        "per_file": per_file_results,
+        "skipped_files": skipped,
+    }
+
+
+def print_folder_report(folder_result: dict, gt_dir: str, pred_dir: str) -> None:
+    s = folder_result["average_summary"]
+    per_file = folder_result["per_file"]
+    skipped = folder_result["skipped_files"]
+
+    print("\n" + "=" * 70)
+    print(f"  GT DIR  : {gt_dir}")
+    print(f"  PRED DIR: {pred_dir}")
+    print("=" * 70)
+    print(f"  Files evaluated     : {s['num_files_evaluated']}")
+    print(f"  Files skipped       : {s['num_files_skipped']}")
+    print("-" * 70)
+
+    # Per-file summary table
+    print(f"  {'File':<35} {'Accuracy':>10} {'Similarity':>12} {'Exact':>7} {'Total':>7}")
+    print("  " + "-" * 73)
+    for fname, r in per_file.items():
+        fs = r["summary"]
+        print(
+            f"  {fname:<35} {fs['field_accuracy']:>9.1%} "
+            f"{fs['mean_similarity']:>11.1%} "
+            f"{fs['exact_matches']:>7} {fs['total_gt_fields']:>7}"
+        )
+
+    print("  " + "-" * 73)
+    print(f"  {'AVERAGE':<35} {s['field_accuracy']:>9.1%} {s['mean_similarity']:>11.1%} "
+          f"{s['exact_matches']:>7} {s['total_gt_fields']:>7}")
+    print("=" * 70)
+
+    print(f"\n  Overall field accuracy     : {s['field_accuracy']:.1%}")
+    print(f"  Overall mean similarity    : {s['mean_similarity']:.1%}")
+    if s["null_field_accuracy"] is not None:
+        print(f"  Overall null-field acc.    : {s['null_field_accuracy']:.1%}")
+    if s["filled_field_accuracy"] is not None:
+        print(f"  Overall filled-field acc.  : {s['filled_field_accuracy']:.1%}")
+
+    if skipped:
+        print(f"\n  Skipped (no matching pred): {', '.join(skipped)}")
+
+    print()
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate healthcare JSON prediction vs ground truth.")
-    parser.add_argument("--gt",   required=True, help="Path to ground truth JSON file")
-    parser.add_argument("--pred", required=True, help="Path to prediction JSON file")
+    # Single file mode
+    parser.add_argument("--gt",   default=None, help="Path to ground truth JSON file")
+    parser.add_argument("--pred", default=None, help="Path to prediction JSON file")
+    # Folder mode
+    parser.add_argument("--gt-dir",   default=None, help="Path to ground truth folder of JSON files")
+    parser.add_argument("--pred-dir", default=None, help="Path to prediction folder of JSON files")
     parser.add_argument("--output", default=None, help="Optional path to save detailed results JSON")
+    parser.add_argument("--verbose", type=int, default=2, choices=[1, 2],
+                        help="Folder mode verbosity: 1=summary only, 2=full per-file details (default: 2)")
     args = parser.parse_args()
 
-    gt_path   = Path(args.gt)
-    pred_path = Path(args.pred)
+    folder_mode = args.gt_dir is not None or args.pred_dir is not None
+    file_mode   = args.gt is not None or args.pred is not None
 
-    gt   = json.loads(gt_path.read_text(encoding="utf-8"))
-    pred = json.loads(pred_path.read_text(encoding="utf-8"))
+    if folder_mode and file_mode:
+        parser.error("Use either --gt/--pred (single file) or --gt-dir/--pred-dir (folder), not both.")
+    if folder_mode:
+        if not args.gt_dir or not args.pred_dir:
+            parser.error("Both --gt-dir and --pred-dir are required for folder mode.")
+        gt_dir   = Path(args.gt_dir)
+        pred_dir = Path(args.pred_dir)
+        folder_result = evaluate_folders(gt_dir, pred_dir)
+        print_folder_report(folder_result, str(gt_dir), str(pred_dir))
 
-    result = evaluate(gt, pred)
-    print_report(result, str(gt_path), str(pred_path))
+        # Print per-file details only when verbose=2
+        if args.verbose >= 2:
+            for fname, result in folder_result["per_file"].items():
+                print_report(result, str(gt_dir / fname), str(pred_dir / fname))
 
-    if args.output:
-        out = Path(args.output)
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
-        print(f"Detailed results saved to: {out}")
+        if args.output:
+            out = Path(args.output)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(json.dumps(folder_result, ensure_ascii=False, indent=2), encoding="utf-8")
+            print(f"Detailed results saved to: {out}")
+    else:
+        if not args.gt or not args.pred:
+            parser.error("Both --gt and --pred are required for single file mode.")
+        gt_path   = Path(args.gt)
+        pred_path = Path(args.pred)
+
+        gt   = json.loads(gt_path.read_text(encoding="utf-8"))
+        pred = json.loads(pred_path.read_text(encoding="utf-8"))
+
+        result = evaluate(gt, pred)
+        print_report(result, str(gt_path), str(pred_path))
+
+        if args.output:
+            out = Path(args.output)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+            print(f"Detailed results saved to: {out}")
 
 
 if __name__ == "__main__":
