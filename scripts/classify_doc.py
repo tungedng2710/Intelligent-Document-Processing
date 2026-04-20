@@ -56,7 +56,7 @@ def classify_document(image_path: str, base_url: str = OLLAMA_BASE_URL, model: s
         
         # Prepare the prompt
         document_list = "\n".join([f"- {doc}" for doc in DOCUMENT_NAMES])
-        prompt = f"""You are a healthcare document classifier. Analyze this medical document image and identify its type.
+        prompt = f"""You are a healthcare document classifier. Analyze this medical document image and identify its type. Focus on the title to consider the document type, but you can also use other visual cues.
 
 Available document types:
 {document_list}
