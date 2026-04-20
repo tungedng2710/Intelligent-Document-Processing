@@ -8,6 +8,9 @@ import os
 # --- Ollama server ---
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:7860")
 
+# --- VLLM server ---
+VLLM_BASE_URL = os.getenv("VLLM_BASE_URL", "http://localhost:9888")
+
 # --- OCR engine (Step 1: document → markdown) ---
 # Set OCR_ENGINE to "marker" (default) or "ollama"
 OCR_ENGINE = os.getenv("OCR_ENGINE", "marker")
@@ -19,6 +22,7 @@ OCR_TIMEOUT = int(os.getenv("OCR_TIMEOUT", "300"))
 OCR_TEMPERATURE = float(os.getenv("OCR_TEMPERATURE", "0"))
 
 # --- LLM model (Step 2: markdown → JSON) ---
+LLM_ENGINE = os.getenv("LLM_ENGINE", "ollama")  # "ollama" or "vllm"
 LLM_MODEL = os.getenv("LLM_MODEL", "qwen3.5:2b-bf16")
 LLM_TIMEOUT = int(os.getenv("LLM_TIMEOUT", "300"))
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0"))

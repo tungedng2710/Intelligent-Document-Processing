@@ -1,0 +1,29 @@
+{
+  "THÔNG TIN CHUNG": {
+    "Tên phiếu": "<string: Tên loại phiếu kèm số thứ tự, ví dụ 'TỜ ĐIỀU TRỊ (Số 01)'>",
+    "MS": "<string: Mã số biểu mẫu>",
+    "Số vào viện": "<string: Số vào viện của bệnh nhân>",
+    "Mã KCB": "<string: Mã khám chữa bệnh>",
+    "Khoa": "<string: Tên khoa điều trị>"
+  },
+  "THÔNG TIN NGƯỜI BỆNH": {
+    "Họ tên người bệnh": "<string: Họ và tên bệnh nhân>",
+    "Tuổi": "<string: Tuổi bệnh nhân, ví dụ '67 tuổi'>",
+    "Giới tính": "<string: Giới tính, ví dụ 'Nam' hoặc 'Nữ'>",
+    "Buồng": "<string|null: Tên buồng bệnh>",
+    "Giường": "<string|null: Mã giường bệnh>",
+    "Chẩn bệnh": "<string: Chẩn đoán bệnh chính>",
+    "Bệnh kèm theo": "<string|null: Các bệnh kèm theo, phân cách bằng dấu />"
+  },
+  "NỘI DUNG ĐIỀU TRỊ": [
+    {
+      "Ngày giờ": "<string: Ngày giờ ghi nhận, định dạng hh:mm, dd/mm/yyyy>",
+      "Diễn biến bệnh": "<string: Mô tả chi tiết diễn biến bệnh, bao gồm tiền sử, bệnh sử, khám lâm sàng, chẩn đoán. Nhiều dòng phân cách bằng \\n>",
+      "Y lệnh điều trị": "<string: Chi tiết y lệnh điều trị bao gồm thuốc, liều lượng, thủ thuật, chế độ theo dõi. Nhiều dòng phân cách bằng \\n>"
+    }
+  ],
+  "XÁC NHẬN": {
+    "Ký bởi": "<string|null: Thông tin ký tên, bao gồm chức danh>",
+    "Bác sĩ điều trị": "<string|null: Họ tên bác sĩ điều trị>"
+  }
+}

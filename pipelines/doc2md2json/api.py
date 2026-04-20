@@ -32,7 +32,7 @@ def pdf_to_images(pdf_bytes: bytes) -> list[bytes]:
         images.append(pix.tobytes("png"))
     doc.close()
     return images
-from .models import MarkerOCR, OllamaLLM, OllamaOCR
+from .models import MarkerOCR, OllamaLLM, OllamaOCR, VLLMLLM
 from .utils import parse_json_response
 
 logging.basicConfig(
@@ -66,16 +66,24 @@ def _get_ocr_model() -> MarkerOCR | OllamaOCR:
     return _ocr_model
 
 
-def _get_llm_model() -> OllamaLLM:
+def _get_llm_model() -> OllamaLLM | VLLMLLM:
     global _llm_model
     if _llm_model is None:
-        _llm_model = OllamaLLM(
-            model=config.LLM_MODEL,
-            base_url=config.OLLAMA_BASE_URL,
-            timeout=config.LLM_TIMEOUT,
-            temperature=config.LLM_TEMPERATURE,
-            think=config.LLM_THINK,
-        )
+        if config.LLM_ENGINE == "vllm":
+            _llm_model = VLLMLLM(
+                model=config.LLM_MODEL,
+                base_url=config.VLLM_BASE_URL,
+                timeout=config.LLM_TIMEOUT,
+                temperature=config.LLM_TEMPERATURE,
+            )
+        else:
+            _llm_model = OllamaLLM(
+                model=config.LLM_MODEL,
+                base_url=config.OLLAMA_BASE_URL,
+                timeout=config.LLM_TIMEOUT,
+                temperature=config.LLM_TEMPERATURE,
+                think=config.LLM_THINK,
+            )
         logger.info(f"LLM model initialised: {_llm_model.model_name}")
     return _llm_model
 

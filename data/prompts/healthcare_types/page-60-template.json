@@ -1,0 +1,40 @@
+{
+  "THÔNG TIN CHUNG": {
+    "SỞ Y TẾ": "<string: Tên tỉnh/thành phố của sở y tế>",
+    "BỆNH VIỆN": "<string: Tên bệnh viện>",
+    "Khoa": "<string: Tên khoa điều trị>",
+    "Quốc hiệu tiêu ngữ": "<string: Quốc hiệu và tiêu ngữ, nhiều dòng phân cách bằng \\n>",
+    "Tên phiếu": "<string: Tên loại phiếu, ví dụ 'GIẤY RA VIỆN'>",
+    "MS": "<string: Mã số biểu mẫu>",
+    "Mã KCB": "<string: Mã khám chữa bệnh>",
+    "Mã Y tế": "<string|null: Mã y tế>"
+  },
+  "THÔNG TIN NGƯỜI BỆNH": {
+    "Họ tên người bệnh": "<string: Họ và tên bệnh nhân>",
+    "Ngày/tháng/năm sinh": "<string: Ngày sinh, định dạng dd/mm/yyyy>",
+    "Tuổi": "<string: Tuổi bệnh nhân, ví dụ '67 tuổi'>",
+    "Giới tính": "<string: Giới tính, ví dụ 'Nam' hoặc 'Nữ'>",
+    "Dân tộc": "<string: Tên dân tộc>",
+    "Nghề nghiệp": "<string|null: Nghề nghiệp của bệnh nhân>",
+    "Mã số BHXH/Thẻ BHYT số": "<string|null: Mã số bảo hiểm xã hội hoặc số thẻ BHYT>",
+    "Địa chỉ": "<string: Địa chỉ của bệnh nhân>"
+  },
+  "THÔNG TIN ĐIỀU TRỊ": {
+    "Vào viện lúc": "<string: Thời gian vào viện, định dạng 'hh giờ mm phút ngày dd tháng mm năm yyyy'>",
+    "Ra viện lúc": "<string: Thời gian ra viện, định dạng 'hh giờ mm phút ngày dd tháng mm năm yyyy'>",
+    "Chẩn đoán": "<string: Chẩn đoán bệnh kèm mã ICD, các bệnh phân cách bằng dấu - hoặc />",
+    "Phương pháp điều trị": "<string|null: Mô tả phương pháp điều trị>",
+    "Ghi chú": "<string|null: Ghi chú khi ra viện>"
+  },
+  "XÁC NHẬN": {
+    "Giám đốc/ PGĐ bệnh viện": {
+      "Ngày ký": "<string|null: Ngày ký, định dạng 'Ngày dd tháng mm năm yyyy'>",
+      "Ký tên, đóng dấu": "<string|null: Thông tin ký tên và đóng dấu>"
+    },
+    "Trưởng khoa/ Phó Trưởng khoa": {
+      "Ngày ký": "<string|null: Ngày ký, định dạng 'Ngày dd tháng mm năm yyyy'>",
+      "Ký tên": "<string|null: Thông tin ký tên>"
+    }
+  },
+  "Thông tin chân trang": "<string|null: Nội dung chân trang gồm ngày giờ in, mã người dùng, số trang>"
+}

@@ -1,0 +1,42 @@
+{
+  "THÔNG TIN CHUNG": {
+    "Bộ Y tế (Sở Y tế)": "<string: Tên sở y tế/bộ y tế>",
+    "BV": "<string: Tên bệnh viện>",
+    "Khoa": "<string: Tên khoa điều trị>",
+    "Tên phiếu": "<string: Tên loại phiếu, ví dụ 'PHIẾU CÔNG KHAI DỊCH VỤ KHÁM CHỮA BỆNH NỘI TRÚ'>",
+    "Mã số phiếu": "<string: Mã KCB>"
+  },
+  "THÔNG TIN NGƯỜI BỆNH": {
+    "Họ tên người bệnh": "<string: Họ và tên bệnh nhân>",
+    "Ngày sinh": "<string: Ngày sinh, định dạng dd/mm/yyyy>",
+    "Giới tính": {
+      "Nam": "<true/false: Checkbox giới tính Nam>",
+      "Nữ": "<true/false: Checkbox giới tính Nữ>"
+    },
+    "Giường": "<string|null: Mã giường bệnh>",
+    "Buồng": "<string|null: Tên buồng bệnh>",
+    "Ngày vào viện": "<string|null: Ngày vào viện, định dạng dd/mm/yyyy>",
+    "Chẩn bệnh": "<string: Chẩn đoán bệnh kèm mã ICD, các bệnh phân cách bằng dấu />"
+  },
+  "BẢNG KÊ DỊCH VỤ": [
+    {
+      "Nhóm": "<string: Tên nhóm dịch vụ, ví dụ '1. Thuốc BH', '2. Xét nghiệm - TDCN'>",
+      "Thành tiền nhóm": "<string: Tổng thành tiền của nhóm>",
+      "Chi tiết": [
+        {
+          "STT": "<string: Số thứ tự>",
+          "TÊN DỊCH VỤ KHÁM BỆNH, CHỮA BỆNH": "<string: Tên thuốc/dịch vụ/vật tư>",
+          "ĐVT": "<string: Đơn vị tính, ví dụ 'Lọ', 'Viên', 'Lần', 'Cái'>",
+          "SỐ LƯỢNG (THEO NGÀY/THÁNG)": {
+            "<dd.mm>": "<string|null: Số lượng sử dụng trong ngày, ví dụ '1', '0,5', null nếu không sử dụng>"
+          },
+          "TỔNG SỐ": "<string: Tổng số lượng>",
+          "ĐƠN GIÁ": "<string: Đơn giá, có dấu chấm phân cách hàng nghìn>",
+          "THÀNH TIỀN": "<string: Thành tiền, có dấu chấm phân cách hàng nghìn>",
+          "GHI CHÚ": "<string|null: Ghi chú>"
+        }
+      ]
+    }
+  ],
+  "Thông tin chân trang": "<string|null: Nội dung chân trang gồm ngày giờ in, mã người dùng, số trang>"
+}

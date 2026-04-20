@@ -4,7 +4,7 @@ data/
 logs/
 services/
 test_scripts/
-scripts/
+# scripts/  # temporarily removed
 # r2/r3 experiment artefacts
 data/r2_bill_of_lading/
 data/r3_bank_reports/

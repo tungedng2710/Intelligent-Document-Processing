@@ -1,42 +1,34 @@
 # ── IDP Pipeline API ─────────────────────────────────────────────────────────
-# Base: NVIDIA CUDA 12.6 + cuDNN runtime on Ubuntu 24.04 (ships Python 3.12)
+# Base: Python 3.12 on Ubuntu 24.04
 # Services exposed:
 #   7871 – OCR API  (document → markdown)
 #   7872 – LLM API  (markdown → JSON)
 #   7873 – Wrapper API (combined)
 # ─────────────────────────────────────────────────────────────────────────────
-FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu24.04
+FROM python:3.12-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    VIRTUAL_ENV=/opt/venv
-
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+    PIP_NO_CACHE_DIR=1
 
 # ---------- system dependencies ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        python3.12 \
-        python3.12-venv \
-        python3-pip \
         # OpenCV / PaddleOCR runtime libs
         libgl1 \
         libglib2.0-0 \
         libgomp1 \
         # misc utilities
         curl \
-    && rm -rf /var/lib/apt/lists/* \
-    # create isolated venv (avoids PEP 668 "externally managed" error on 24.04)
-    && python3.12 -m venv "$VIRTUAL_ENV"
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# ---------- PyTorch with CUDA 12.6 (install first – largest layer) ----------
+# ---------- PyTorch CPU (for marker-pdf) ----------
 RUN pip install \
         torch==2.10.0 \
         torchvision==0.25.0 \
         torchaudio==2.10.0 \
-        --index-url https://download.pytorch.org/whl/cu126
+        --index-url https://download.pytorch.org/whl/cpu
 
 # ---------- application Python dependencies ----------
 COPY requirements-docker.txt .
@@ -47,7 +39,7 @@ COPY pipelines/ ./pipelines/
 COPY modules/   ./modules/
 
 # ---------- entrypoint ----------
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+ADD docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 7871 7872 7873

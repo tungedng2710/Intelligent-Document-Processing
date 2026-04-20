@@ -1,0 +1,105 @@
+{
+  "THÔNG TIN CHUNG": {
+    "Mẫu số": "<string: Mã mẫu biểu, ví dụ '01/KBCB'>",
+    "Tên phiếu": "<string: Tên loại phiếu, ví dụ 'BẢNG KÊ CHI PHÍ ĐIỀU TRỊ NGOẠI TRÚ'>",
+    "Mã số người bệnh": "<string: Mã số bệnh nhân>",
+    "Khoa": "<string: Tên khoa điều trị>",
+    "Số khám bệnh": "<string: Mã KCB>",
+    "Mã khoa": "<string: Mã khoa>",
+    "Biểu tượng/Số thứ tự": "<string|null: Số thứ tự hoặc biểu tượng>"
+  },
+  "I. Phần hành chính": {
+    "(1) Họ tên người bệnh": "<string: Họ và tên bệnh nhân>",
+    "Ngày, tháng, năm sinh": "<string: Ngày sinh, định dạng dd/mm/yyyy>",
+    "Giới tính": "<string: Mã giới tính, ví dụ '1' cho Nam, '2' cho Nữ>",
+    "(2) Địa chỉ hiện tại": "<string: Địa chỉ đầy đủ của bệnh nhân>",
+    "(3) Mã khu vực (K1, K2, K3)": "<string|null: Mã khu vực>",
+    "(4) Mã thẻ": "<string|null: Mã thẻ BHYT>",
+    "Giá trị từ": "<string|null: Ngày bắt đầu hiệu lực thẻ, định dạng dd/mm/yyyy>",
+    "đến": "<string|null: Ngày hết hạn thẻ, định dạng dd/mm/yyyy>",
+    "(5) Nơi ĐK KCB ban đầu": "<string|null: Tên cơ sở đăng ký KCB ban đầu>",
+    "(6) Mã": "<string|null: Mã cơ sở KCB ban đầu>",
+    "(7) Đến khám": "<string|null: Thời gian đến khám, định dạng 'hh giờ mm phút, ngày dd/mm/yyyy'>",
+    "(8) Kết thúc điều trị ngoại trú/nội trú từ": "<string|null: Thời gian bắt đầu điều trị>",
+    "(9) Kết thúc khám/điều trị từ": "<string|null: Thời gian kết thúc điều trị>",
+    "Tổng số ngày điều trị": "<string|null: Tổng số ngày điều trị>",
+    "(10) Tình trạng ra viện": "<string|null: Mã tình trạng ra viện>",
+    "Tuyến khám bệnh": {
+      "(11) Cấp cứu": "<true/false: Checkbox cấp cứu>",
+      "(12) Đúng tuyến": "<true/false: Checkbox đúng tuyến>",
+      "(13) Thông tuyến": "<true/false: Checkbox thông tuyến>",
+      "(14) Trái tuyến": "<true/false: Checkbox trái tuyến>"
+    },
+    "Nơi chuyển đến từ": "<string|null: Tên cơ sở chuyển đến>",
+    "Nơi chuyển đi": "<string|null: Tên cơ sở chuyển đi>",
+    "(15) Chẩn đoán xác định": "<string|null: Chẩn đoán xác định kèm mã ICD>",
+    "(16) Mã bệnh": "<string|null: Mã ICD bệnh chính>",
+    "(17) Bệnh kèm theo": "<string|null: Chẩn đoán bệnh kèm theo kèm mã ICD, phân cách bằng dấu />",
+    "(18) Mã bệnh kèm theo": "<string|null: Mã ICD bệnh kèm theo, phân cách bằng dấu />",
+    "(19) Thời điểm đủ 5 năm liên tục từ ngày": "<string|null: Ngày đủ 5 năm liên tục, định dạng dd/mm/yyyy>",
+    "(20) Miễn phí cùng chi trả trong năm từ ngày": "<string|null: Ngày miễn phí cùng chi trả>"
+  },
+  "II. Chi phí khám bệnh, chữa bệnh": {
+    "Thông tin thẻ áp dụng": {
+      "Mã thẻ BHYT": "<string|null: Mã thẻ BHYT áp dụng>",
+      "Giá trị từ": "<string|null: Ngày bắt đầu hiệu lực, định dạng dd/mm/yyyy>",
+      "đến": "<string|null: Ngày hết hạn, định dạng dd/mm/yyyy>",
+      "Mức hưởng": "<string|null: Mức hưởng BHYT, ví dụ '100%'>",
+      "Chi phí KCB từ ngày... đến ngày...": "<string|null: Mô tả khoảng thời gian chi phí KCB>"
+    },
+    "Bảng chi tiết": [
+      {
+        "Nhóm": "<string: Tên nhóm chi phí, ví dụ '3. Xét nghiệm', '6. Phẫu thuật, thủ thuật'>",
+        "Chi tiết": [
+          {
+            "STT": "<string: Số thứ tự>",
+            "(1) Nội dung": "<string: Mã và tên dịch vụ/thuốc/vật tư>",
+            "(2) Đơn vị tính": "<string: Đơn vị tính>",
+            "(3) Số lượng": "<string: Số lượng>",
+            "(4) Đơn giá BV (đồng)": "<string: Đơn giá bệnh viện>",
+            "(5) Đơn giá BH (đồng)": "<string: Đơn giá bảo hiểm>",
+            "(6) Tỷ lệ thanh toán theo dịch vụ %": "<string: Tỷ lệ thanh toán theo dịch vụ>",
+            "(7) Thành tiền BV (đồng)": "<string: Thành tiền bệnh viện>",
+            "(8) Tỷ lệ thanh toán BHYT %": "<string: Tỷ lệ thanh toán BHYT>",
+            "(9) Thành tiền BH (đồng)": "<string: Thành tiền bảo hiểm>",
+            "(10) Quỹ BHYT": "<string: Số tiền quỹ BHYT chi trả>",
+            "(11) Người bệnh cùng chi trả": "<string: Số tiền người bệnh cùng chi trả>",
+            "(12) Khác": "<string|null: Chi phí khác>",
+            "(13) Người bệnh tự trả": "<string: Số tiền người bệnh tự trả>"
+          }
+        ]
+      }
+    ],
+    "Tổng kết": {
+      "Tổng chi phí lần khám bệnh/cả đợt điều trị": "<string: Tổng chi phí bằng số kèm đơn vị 'đồng'>",
+      "Viết bằng chữ": "<string: Tổng chi phí viết bằng chữ>",
+      "Trong đó, số tiền do": {
+        "Quỹ BHYT thanh toán theo giá dịch vụ y tế": "<string: Số tiền BHYT thanh toán theo giá dịch vụ>",
+        "Quỹ BHYT thanh toán theo định suất": "<string: Số tiền BHYT thanh toán theo định suất>",
+        "Người bệnh trả, trong đó": {
+          "Cùng trả trong phạm vi BHYT": "<string: Số tiền cùng trả trong phạm vi BHYT>",
+          "Các khoản phải trả khác": "<string: Số tiền các khoản phải trả khác>"
+        }
+      }
+    }
+  },
+  "XÁC NHẬN": {
+    "NGƯỜI LẬP BẢNG KÊ": {
+      "Ký, ghi rõ họ tên": "<string|null: Họ tên người lập bảng kê>"
+    },
+    "KẾ TOÁN VIỆN PHÍ": {
+      "Ngày ký": "<string|null: Ngày ký, định dạng 'Ngày dd tháng mm năm yyyy'>",
+      "Ký, ghi rõ họ tên": "<string|null: Họ tên kế toán viện phí>"
+    },
+    "XÁC NHẬN CỦA NGƯỜI BỆNH": {
+      "Ghi chú": "<string|null: Nội dung xác nhận của người bệnh>",
+      "Ký, ghi rõ họ tên": "<string|null: Họ tên người bệnh>"
+    },
+    "GIÁM ĐỊNH BHYT": {
+      "Người giám định": "<string|null: Họ tên người giám định BHYT>",
+      "Ngày ký": "<string|null: Ngày ký, định dạng 'Ngày dd tháng mm năm yyyy'>",
+      "Ký, ghi rõ họ tên": "<string|null: Họ tên người giám định>"
+    }
+  },
+  "Thông tin chân trang": "<string|null: Nội dung chân trang gồm ngày giờ in, mã người dùng, số trang>"
+}
