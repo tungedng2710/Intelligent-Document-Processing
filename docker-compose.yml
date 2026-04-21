@@ -1,18 +1,21 @@
 services:
-  # ── IDP API (OCR + LLM + Wrapper) ─────────────────────────────────────────
-  idp-api:
+  classify-api:
     build:
       context: .
       dockerfile: Dockerfile
     image: idp-api:latest
-    container_name: idp-api
-    env_file: .env
+    container_name: classify-api
+    command: ["uvicorn", "app.healthcare_api:classify_app", "--host", "0.0.0.0", "--port", "7871"]
+    environment:
+      OLLAMA_BASE_URL: ${CONTAINER_OLLAMA_BASE_URL:-http://host.docker.internal:7860}
+      CLASSIFIER_MODEL: ${CLASSIFIER_MODEL:-qwen3.5:cloud}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
-      - "7871:7871"   # OCR API
-      - "7872:7872"   # LLM API
-      - "7873:7873"   # Wrapper API
+      - "7871:7871"
     volumes:
       - ./data:/app/data
+      - ./output:/app/output
       - ./logs:/app/logs
     restart: unless-stopped
     healthcheck:
@@ -20,4 +23,61 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 120s  # marker models take time to load on first request
+
+  extraction-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: idp-api:latest
+    container_name: extraction-api
+    command: ["uvicorn", "app.healthcare_api:extraction_app", "--host", "0.0.0.0", "--port", "7872"]
+    environment:
+      OLLAMA_BASE_URL: ${CONTAINER_OLLAMA_BASE_URL:-http://host.docker.internal:7860}
+      EXTRACTOR_MODEL: ${EXTRACTOR_MODEL:-qwen3.5:cloud}
+      DEFAULT_PROMPT_TEMPLATE: ${DEFAULT_PROMPT_TEMPLATE:-healthcare_types/prompt_with_template.txt}
+      DEFAULT_JSON_TEMPLATE: ${DEFAULT_JSON_TEMPLATE:-healthcare_types/page-04-template.json}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "7872:7872"
+    volumes:
+      - ./data:/app/data
+      - ./output:/app/output
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:7872/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  healthcare-ollama-pipeline-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: idp-api:latest
+    container_name: healthcare-ollama-pipeline-api
+    command: ["uvicorn", "app.healthcare_api:healthcare_pipeline_app", "--host", "0.0.0.0", "--port", "7873"]
+    environment:
+      OLLAMA_BASE_URL: ${CONTAINER_OLLAMA_BASE_URL:-http://host.docker.internal:7860}
+      CLASSIFIER_MODEL: ${CLASSIFIER_MODEL:-qwen3.5:cloud}
+      EXTRACTOR_MODEL: ${EXTRACTOR_MODEL:-qwen3.5:cloud}
+      TEMPLATES_DIR: ${TEMPLATES_DIR:-/app/data/prompts}
+      OUTPUT_DIR: ${OUTPUT_DIR:-/app/output}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "7873:7873"
+    volumes:
+      - ./data:/app/data
+      - ./output:/app/output
+      - ./logs:/app/logs
+    restart: unless-stopped
+    depends_on:
+      - classify-api
+      - extraction-api
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:7873/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

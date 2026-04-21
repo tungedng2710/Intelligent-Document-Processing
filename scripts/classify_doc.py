@@ -4,8 +4,6 @@ import requests
 import sys
 from pathlib import Path
 from typing import Tuple, Optional
-import cv2
-import numpy as np
 
 # Configuration
 OLLAMA_BASE_URL = "http://localhost:7860"

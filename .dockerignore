@@ -1,6 +1,8 @@
 # ── Project-specific large / sensitive directories ────────────────────────────
 # Training data, benchmark datasets, raw uploads — not needed inside the image
 data/
+!data/prompts/
+!data/prompts/**
 logs/
 services/
 test_scripts/
@@ -164,6 +166,8 @@ webapp/rtsp_url.json
 *.md
 *.png
 app*/
+!app/
+!app/**
 output*/
 extractor/unused*
 extractor/test*

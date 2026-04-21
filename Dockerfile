@@ -9,7 +9,8 @@ FROM python:3.12-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONPATH=/app
 
 # ---------- system dependencies ----------
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -35,15 +36,13 @@ COPY requirements-docker.txt .
 RUN pip install -r requirements-docker.txt
 
 # ---------- application source code ----------
+COPY app/       ./app/
 COPY pipelines/ ./pipelines/
 COPY modules/   ./modules/
-
-# ---------- entrypoint ----------
-ADD docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+COPY scripts/   ./scripts/
+COPY data/prompts/ ./data/prompts/
 
 EXPOSE 7871 7872 7873
 
-ENTRYPOINT ["docker-entrypoint.sh"]
-# default: start all three services
-CMD ["--service", "all"]
+# default: start the existing doc2md2json stack
+CMD ["python", "-m", "pipelines.doc2md2json", "--service", "all"]
