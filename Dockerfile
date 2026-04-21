@@ -38,7 +38,7 @@ RUN pip install -r requirements-docker.txt
 # ---------- application source code ----------
 COPY app/       ./app/
 COPY pipelines/ ./pipelines/
-COPY modules/   ./modules/
+# COPY modules/   ./modules/
 COPY scripts/   ./scripts/
 COPY data/prompts/ ./data/prompts/
 
