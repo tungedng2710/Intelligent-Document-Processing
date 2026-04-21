@@ -32,7 +32,7 @@ LLM_THINK = os.getenv("LLM_THINK", "false").lower() == "true"
 API_HOST = os.getenv("API_HOST", "0.0.0.0")
 OCR_API_PORT = int(os.getenv("OCR_API_PORT", "7871"))
 LLM_API_PORT = int(os.getenv("LLM_API_PORT", "7872"))
-WRAPPER_API_PORT = int(os.getenv("WRAPPER_API_PORT", "7873"))
+WRAPPER_API_PORT = int(os.getenv("WRAPPER_API_PORT", "7865"))
 
 # URLs used by the wrapper to call the two upstream services
 OCR_API_URL = os.getenv("OCR_API_URL", f"http://0.0.0.0:{OCR_API_PORT}")

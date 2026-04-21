@@ -277,6 +277,167 @@ def extract_information(
         return None
 
 
+class HealthcareOllamaPipeline:
+    """API-style healthcare pipeline with classify and extraction methods."""
+
+    def __init__(
+        self,
+        templates_base_dir: str = "data/prompts",
+        ollama_base_url: str = OLLAMA_BASE_URL,
+        classifier_model: str = CLASSIFIER_MODEL,
+        extractor_model: str = EXTRACTOR_MODEL,
+    ) -> None:
+        self.templates_dir = Path(templates_base_dir)
+        self.ollama_base_url = ollama_base_url
+        self.classifier_model = classifier_model
+        self.extractor_model = extractor_model
+
+    def classify(self, image_path: str) -> Dict[str, Any]:
+        """
+        Classify a single image into a healthcare document type.
+
+        Returns:
+            {
+                "status": "success" | "error",
+                "message": str,
+                "document_type": Optional[str],
+                "template_info": Optional[Dict[str, str]]
+            }
+        """
+        image = Path(image_path)
+        if not image.exists():
+            return {
+                "status": "error",
+                "message": f"Image file not found: {image}",
+                "document_type": None,
+                "template_info": None,
+            }
+
+        if not self.templates_dir.exists():
+            return {
+                "status": "error",
+                "message": f"Templates directory not found: {self.templates_dir}",
+                "document_type": None,
+                "template_info": None,
+            }
+
+        doc_type, template_info = classify_document(
+            str(image),
+            self.ollama_base_url,
+            self.classifier_model,
+        )
+        if not doc_type:
+            return {
+                "status": "error",
+                "message": "Failed to classify document",
+                "document_type": None,
+                "template_info": None,
+            }
+
+        return {
+            "status": "success",
+            "message": "Document classified successfully",
+            "document_type": doc_type,
+            "template_info": template_info,
+        }
+
+    def extraction(self, image_path: str, output_dir: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Extract structured information from a single image.
+
+        Execution order:
+        1) call classifier
+        2) call extraction model
+        """
+        image = Path(image_path)
+        if not image.exists():
+            return {
+                "status": "error",
+                "message": f"Image file not found: {image}",
+                "document_type": None,
+                "template_filename": None,
+                "extracted_data": None,
+                "output_path": None,
+            }
+
+        if not self.templates_dir.exists():
+            return {
+                "status": "error",
+                "message": f"Templates directory not found: {self.templates_dir}",
+                "document_type": None,
+                "template_filename": None,
+                "extracted_data": None,
+                "output_path": None,
+            }
+
+        print(f"\n{'='*60}")
+        print("Healthcare Document Processing Pipeline")
+        print(f"{'='*60}")
+        print(f"Input image: {image}")
+
+        # Step 1: call classifier
+        classify_result = self.classify(str(image))
+        if classify_result["status"] == "error":
+            return {
+                "status": "error",
+                "message": classify_result["message"],
+                "document_type": None,
+                "template_filename": None,
+                "extracted_data": None,
+                "output_path": None,
+            }
+
+        doc_type = classify_result["document_type"]
+        template_info = classify_result["template_info"]
+        template_filename = template_info.get("template") if template_info else None
+
+        prompt_template, json_template = load_templates(template_info, self.templates_dir)
+        if not prompt_template or not json_template:
+            return {
+                "status": "error",
+                "message": "Failed to load templates",
+                "document_type": doc_type,
+                "template_filename": template_filename,
+                "extracted_data": None,
+                "output_path": None,
+            }
+
+        # Step 2: call extraction model
+        extracted_data = extract_information(
+            str(image),
+            prompt_template,
+            json_template,
+            self.ollama_base_url,
+            self.extractor_model,
+        )
+        if not extracted_data:
+            return {
+                "status": "error",
+                "message": "Failed to extract information",
+                "document_type": doc_type,
+                "template_filename": template_filename,
+                "extracted_data": None,
+                "output_path": None,
+            }
+
+        output_path = None
+        if output_dir:
+            output_path_obj = Path(output_dir) / image.with_suffix(".json").name
+            output_path_obj.parent.mkdir(parents=True, exist_ok=True)
+            output_path_obj.write_text(json.dumps(extracted_data, ensure_ascii=False, indent=2))
+            output_path = str(output_path_obj)
+            print(f"\n✓ Processing completed successfully")
+            print(f"✓ Output saved to: {output_path_obj}\n")
+
+        return {
+            "status": "success",
+            "document_type": doc_type,
+            "template_filename": template_filename,
+            "extracted_data": extracted_data,
+            "output_path": output_path,
+        }
+
+
 def process_document(
     image_path: str,
     output_dir: str,
@@ -299,100 +460,13 @@ def process_document(
     Returns:
         Dictionary with results or error information
     """
-    # Validate inputs
-    image_path = Path(image_path)
-    if not image_path.exists():
-        return {
-            "status": "error",
-            "message": f"Image file not found: {image_path}",
-            "document_type": None,
-            "template_filename": None,
-            "extracted_data": None,
-            "output_path": None
-        }
-    
-    templates_dir = Path(templates_base_dir)
-    if not templates_dir.exists():
-        return {
-            "status": "error",
-            "message": f"Templates directory not found: {templates_dir}",
-            "document_type": None,
-            "template_filename": None,
-            "extracted_data": None,
-            "output_path": None
-        }
-    
-    print(f"\n{'='*60}")
-    print(f"Healthcare Document Processing Pipeline")
-    print(f"{'='*60}")
-    print(f"Input image: {image_path}")
-    
-    # Step 1: Classify document
-    doc_type, template_info = classify_document(
-        str(image_path),
-        ollama_base_url,
-        classifier_model
+    pipeline = HealthcareOllamaPipeline(
+        templates_base_dir=templates_base_dir,
+        ollama_base_url=ollama_base_url,
+        classifier_model=classifier_model,
+        extractor_model=extractor_model,
     )
-    
-    if not doc_type:
-        return {
-            "status": "error",
-            "message": "Failed to classify document",
-            "document_type": None,
-            "template_filename": None,
-            "extracted_data": None,
-            "output_path": None
-        }
-    
-    template_filename = template_info.get("template")
-    
-    # Step 2: Load templates
-    prompt_template, json_template = load_templates(template_info, templates_dir)
-    
-    if not prompt_template or not json_template:
-        return {
-            "status": "error",
-            "message": "Failed to load templates",
-            "document_type": doc_type,
-            "template_filename": template_filename,
-            "extracted_data": None,
-            "output_path": None
-        }
-    
-    # Step 3: Extract information
-    extracted_data = extract_information(
-        str(image_path),
-        prompt_template,
-        json_template,
-        ollama_base_url,
-        extractor_model
-    )
-    
-    if not extracted_data:
-        return {
-            "status": "error",
-            "message": "Failed to extract information",
-            "document_type": doc_type,
-            "template_filename": template_filename,
-            "extracted_data": None,
-            "output_path": None
-        }
-    
-    # Save output
-    output_path = Path(output_dir) / image_path.with_suffix(".json").name
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(extracted_data, ensure_ascii=False, indent=2))
-    
-    print(f"\n✓ Processing completed successfully")
-    print(f"✓ Output saved to: {output_path}\n")
-    
-    return {
-        "status": "success",
-        "document_type": doc_type,
-        "template_filename": template_filename,
-        "extracted_data": extracted_data,
-        "output_path": str(output_path)
-    }
+    return pipeline.extraction(image_path=image_path, output_dir=output_dir)
 
 
 def main():

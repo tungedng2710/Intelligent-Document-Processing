@@ -3,7 +3,7 @@
 # Services exposed:
 #   7871 – OCR API  (document → markdown)
 #   7872 – LLM API  (markdown → JSON)
-#   7873 – Wrapper API (combined)
+#   7865 – Wrapper API (combined)
 # ─────────────────────────────────────────────────────────────────────────────
 FROM python:3.12-slim
 
@@ -42,7 +42,7 @@ COPY modules/   ./modules/
 COPY scripts/   ./scripts/
 COPY data/prompts/ ./data/prompts/
 
-EXPOSE 7871 7872 7873
+EXPOSE 7871 7872 7865
 
 # default: start the existing doc2md2json stack
 CMD ["python", "-m", "pipelines.doc2md2json", "--service", "all"]
