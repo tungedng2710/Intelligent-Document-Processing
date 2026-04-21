@@ -1,10 +1,12 @@
 # ── Project-specific large / sensitive directories ────────────────────────────
 # Training data, benchmark datasets, raw uploads — not needed inside the image
 data/
+!data/prompts/
+!data/prompts/**
 logs/
 services/
 test_scripts/
-scripts/
+# scripts/  # temporarily removed
 # r2/r3 experiment artefacts
 data/r2_bill_of_lading/
 data/r3_bank_reports/
@@ -164,6 +166,8 @@ webapp/rtsp_url.json
 *.md
 *.png
 app*/
+!app/
+!app/**
 output*/
 extractor/unused*
 extractor/test*

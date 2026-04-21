@@ -1,0 +1,48 @@
+{
+  "THÔNG TIN CHUNG": {
+    "SỞ Y TẾ": "<string: Tên tỉnh/thành phố của sở y tế>",
+    "BỆNH VIỆN": "<string: Tên viết tắt bệnh viện>",
+    "Địa chỉ": "<string: Địa chỉ đầy đủ của bệnh viện>",
+    "Mã số 1": "<string: Mã phiếu kết quả, ví dụ 'ddMMyy-SSSSS'>",
+    "Mã số 2": "<string: Mã KCB>",
+    "Tên phiếu": "<string: Tên loại phiếu, ví dụ 'PHIẾU TRẢ KẾT QUẢ HUYẾT HỌC'>",
+    "Phân loại": {
+      "Thường": "<true/false: Checkbox phân loại Thường>",
+      "Cấp cứu": "<true/false: Checkbox phân loại Cấp cứu>"
+    }
+  },
+  "THÔNG TIN BỆNH NHÂN": {
+    "Họ tên bệnh nhân": "<string: Họ và tên bệnh nhân>",
+    "Tuổi": "<string: Tuổi bệnh nhân, ví dụ '67 tuổi'>",
+    "Giới tính": "<string: Giới tính, ví dụ 'Nam' hoặc 'Nữ'>",
+    "Địa chỉ": "<string: Địa chỉ đầy đủ của bệnh nhân>",
+    "Số thẻ BHYT": "<string|null: Số thẻ bảo hiểm y tế>",
+    "Hạn thẻ": "<string|null: Ngày hết hạn thẻ BHYT, định dạng dd/mm/yyyy>",
+    "Khoa": "<string: Tên khoa điều trị>",
+    "Phòng": "<string|null: Tên phòng/buồng bệnh>",
+    "Chẩn đoán": "<string|null: Chẩn đoán bệnh kèm mã ICD>",
+    "Bác sỹ chỉ định": "<string|null: Họ tên bác sỹ chỉ định xét nghiệm>"
+  },
+  "KẾT QUẢ XÉT NGHIỆM": [
+    {
+      "TT": "<string|null: Số thứ tự nhóm xét nghiệm>",
+      "XÉT NGHIỆM": "<string: Tên xét nghiệm hoặc tên nhóm xét nghiệm>",
+      "K.QUẢ": "<string|null: Kết quả xét nghiệm, dùng dấu phẩy cho số thập phân>",
+      "GT THAM CHIẾU": "<string|null: Giá trị tham chiếu, định dạng '(min - max)'>",
+      "ĐVT": "<string|null: Đơn vị tính, ví dụ 'T/L', 'g/L', 'fL', '%'>"
+    }
+  ],
+  "XÁC NHẬN": {
+    "Ngày nhận BP": "<string|null: Thời gian nhận bệnh phẩm, định dạng hh:mm, dd/mm/yyyy>",
+    "Thời gian trả kết quả": "<string|null: Thời gian trả kết quả, định dạng hh:mm, dd/mm/yyyy>",
+    "BÁC SỸ ĐIỀU TRỊ": {
+      "Ký bởi": "<string|null: Thông tin ký tên, bao gồm chức danh>",
+      "Họ tên": "<string|null: Họ tên bác sỹ điều trị>"
+    },
+    "NGƯỜI THỰC HIỆN": "<string|null: Họ tên người thực hiện xét nghiệm>",
+    "BS/CN XÉT NGHIỆM": {
+      "Họ tên": "<string|null: Họ tên bác sỹ/cử nhân xét nghiệm>"
+    }
+  },
+  "Thông tin chân trang": "<string|null: Nội dung chân trang gồm ngày giờ in, mã người dùng, số trang>"
+}

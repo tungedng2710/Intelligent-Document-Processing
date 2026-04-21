@@ -1,83 +1,83 @@
 services:
-  # ── Ollama model server ────────────────────────────────────────────────────
-  ollama:
-    image: ollama/ollama:latest
-    container_name: idp-ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_models:/root/.ollama
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:11434/"]
-      interval: 15s
-      timeout: 10s
-      retries: 6
-      start_period: 20s
-
-  # ── IDP API (OCR + LLM + Wrapper) ─────────────────────────────────────────
-  idp-api:
+  classify-api:
     build:
       context: .
       dockerfile: Dockerfile
     image: idp-api:latest
-    container_name: idp-api
-    ports:
-      - "7871:7871"   # OCR API
-      - "7872:7872"   # LLM API
-      - "7873:7873"   # Wrapper API
+    container_name: classify-api
+    command: ["uvicorn", "app.healthcare_api:classify_app", "--host", "0.0.0.0", "--port", "7871"]
     environment:
-      # ---- Ollama connection ----
-      OLLAMA_BASE_URL: http://ollama:11434
-
-      # ---- OCR engine: "marker" (default) or "ollama" ----
-      OCR_ENGINE: marker
-      OCR_FORCE_OCR: "false"
-
-      # ---- LLM model ----
-      LLM_MODEL: qwen3.5:2b-bf16
-      LLM_TIMEOUT: "300"
-      LLM_TEMPERATURE: "0"
-      LLM_THINK: "false"
-
-      # ---- OCR fallback model (only when OCR_ENGINE=ollama) ----
-      OCR_MODEL: deepseek-ocr:3b-bf16
-      OCR_TIMEOUT: "300"
-      OCR_TEMPERATURE: "0"
-
-      # ---- API binding ----
-      API_HOST: "0.0.0.0"
-      OCR_API_PORT: "7871"
-      LLM_API_PORT: "7872"
-      WRAPPER_API_PORT: "7873"
+      OLLAMA_BASE_URL: ${CONTAINER_OLLAMA_BASE_URL:-http://host.docker.internal:7860}
+      CLASSIFIER_MODEL: ${CLASSIFIER_MODEL:-qwen3.5:cloud}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "7871:7871"
     volumes:
       - ./data:/app/data
+      - ./output:/app/output
       - ./logs:/app/logs
-    depends_on:
-      ollama:
-        condition: service_healthy
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:7871/"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 120s  # marker models take time to load on first request
 
-volumes:
-  ollama_models:
-    driver: local
+  extraction-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: idp-api:latest
+    container_name: extraction-api
+    command: ["uvicorn", "app.healthcare_api:extraction_app", "--host", "0.0.0.0", "--port", "7872"]
+    environment:
+      OLLAMA_BASE_URL: ${CONTAINER_OLLAMA_BASE_URL:-http://host.docker.internal:7860}
+      EXTRACTOR_MODEL: ${EXTRACTOR_MODEL:-qwen3.5:cloud}
+      DEFAULT_PROMPT_TEMPLATE: ${DEFAULT_PROMPT_TEMPLATE:-healthcare_types/prompt_with_template.txt}
+      DEFAULT_JSON_TEMPLATE: ${DEFAULT_JSON_TEMPLATE:-healthcare_types/page-04-template.json}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "7872:7872"
+    volumes:
+      - ./data:/app/data
+      - ./output:/app/output
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:7872/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  healthcare-ollama-pipeline-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: idp-api:latest
+    container_name: healthcare-ollama-pipeline-api
+    command: ["uvicorn", "app.healthcare_api:healthcare_pipeline_app", "--host", "0.0.0.0", "--port", "7865"]
+    environment:
+      OLLAMA_BASE_URL: ${CONTAINER_OLLAMA_BASE_URL:-http://host.docker.internal:7860}
+      CLASSIFIER_MODEL: ${CLASSIFIER_MODEL:-qwen3.5:cloud}
+      EXTRACTOR_MODEL: ${EXTRACTOR_MODEL:-qwen3.5:cloud}
+      TEMPLATES_DIR: ${TEMPLATES_DIR:-/app/data/prompts}
+      OUTPUT_DIR: ${OUTPUT_DIR:-/app/output}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "7865:7865"
+    volumes:
+      - ./data:/app/data
+      - ./output:/app/output
+      - ./logs:/app/logs
+    restart: unless-stopped
+    depends_on:
+      - classify-api
+      - extraction-api
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:7865/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

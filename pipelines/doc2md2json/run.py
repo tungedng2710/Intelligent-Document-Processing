@@ -38,7 +38,7 @@ def main():
     parser.add_argument("--host", default=None, help="API bind host")
     parser.add_argument("--ocr-port", type=int, default=None, help="OCR API port (default 7871)")
     parser.add_argument("--llm-port", type=int, default=None, help="LLM API port (default 7872)")
-    parser.add_argument("--wrapper-port", type=int, default=None, help="Wrapper API port (default 7873)")
+    parser.add_argument("--wrapper-port", type=int, default=None, help="Wrapper API port (default 7865)")
     parser.add_argument(
         "--service",
         choices=["ocr", "llm", "wrapper", "both", "all"],

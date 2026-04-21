@@ -1,0 +1,59 @@
+{
+  "THÔNG TIN CHUNG": {
+    "Sở Y Tế": "<string: Tên tỉnh/thành phố của sở y tế>",
+    "Bệnh viện": "<string: Tên bệnh viện>",
+    "Địa chỉ bệnh viện": "<string: Địa chỉ đầy đủ của bệnh viện>",
+    "Mã số 1": "<string: Mã KCB hoặc mã bệnh viện>",
+    "Mã số 2": "<string: Mã số bệnh nhân>",
+    "Tên phiếu": "<string: Tên loại phiếu, ví dụ 'PHIẾU CHỈ ĐỊNH CẬN LÂM SÀNG'>",
+    "Phân loại": {
+      "Thường": "<true/false: Checkbox phân loại Thường>",
+      "Cấp cứu": "<true/false: Checkbox phân loại Cấp cứu>"
+    }
+  },
+  "THÔNG TIN BỆNH NHÂN": {
+    "Họ tên": "<string: Họ và tên bệnh nhân>",
+    "Tuổi": "<string: Tuổi bệnh nhân, ví dụ '67 tuổi'>",
+    "Giới tính": "<string: Giới tính, ví dụ 'Nam' hoặc 'Nữ'>",
+    "Số thẻ BHYT": "<string|null: Số thẻ bảo hiểm y tế>",
+    "Hạn thẻ từ": "<string|null: Ngày bắt đầu hiệu lực thẻ BHYT, định dạng dd/mm/yyyy>",
+    "đến": "<string|null: Ngày hết hạn thẻ BHYT, định dạng dd/mm/yyyy>",
+    "Địa chỉ": "<string: Địa chỉ đầy đủ của bệnh nhân>",
+    "Khoa": "<string: Tên khoa điều trị>",
+    "Phòng": "<string|null: Tên phòng/buồng bệnh>",
+    "Số ĐT": "<string|null: Số điện thoại liên hệ>",
+    "Triệu chứng": "<string|null: Mô tả triệu chứng>",
+    "Chẩn đoán": "<string|null: Chẩn đoán bệnh, các mã ICD phân cách bằng dấu ;>"
+  },
+  "CHỈ ĐỊNH DỊCH VỤ": {
+    "Danh sách dịch vụ": [
+      {
+        "Nhóm": "<string: Tên nhóm dịch vụ và mã nhóm, ví dụ 'XN huyết học - 312'>",
+        "Chi tiết": [
+          {
+            "STT": "<number: Số thứ tự>",
+            "Yêu cầu thực hiện dịch vụ": "<string: Tên dịch vụ yêu cầu thực hiện>",
+            "ĐVT": "<string: Đơn vị tính, ví dụ 'Lần', 'Ống'>",
+            "SL": "<number: Số lượng>",
+            "Đơn giá": "<string: Đơn giá dịch vụ, có dấu chấm phân cách hàng nghìn>",
+            "Thành tiền": "<string: Thành tiền, có dấu chấm phân cách hàng nghìn>",
+            "BHYT": "<string|null: Thông tin BHYT chi trả>",
+            "VP": "<string|null: Thông tin viện phí>",
+            "Ghi chú": "<string|null: Ghi chú thêm>"
+          }
+        ]
+      }
+    ],
+    "Tổng cộng": {
+      "Cộng tổng": "<string: Tổng thành tiền tất cả dịch vụ>"
+    }
+  },
+  "XÁC NHẬN": {
+    "Người bệnh/ người nhà": "<string|null: Nội dung xác nhận đồng ý của người bệnh/người nhà>",
+    "Thời gian": "<string|null: Thời gian xác nhận, định dạng hh:mm, dd/mm/yyyy>",
+    "Bác sĩ chỉ định": {
+      "Ký bởi": "<string|null: Thông tin ký tên, bao gồm chức danh>",
+      "Họ tên": "<string|null: Họ tên bác sĩ chỉ định>"
+    }
+  }
+}

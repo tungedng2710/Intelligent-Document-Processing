@@ -1,0 +1,35 @@
+{
+  "THÔNG TIN CHUNG": {
+    "Khoa": "<string: Tên khoa điều trị>",
+    "Tên phiếu": "<string: Tên loại phiếu, ví dụ 'PHIẾU THEO DÕI CHỨC NĂNG SỐNG'>",
+    "MS": "<string: Mã số biểu mẫu>",
+    "Số vào viện": "<string: Số vào viện của bệnh nhân>",
+    "Mã KCB": "<string: Mã khám chữa bệnh>"
+  },
+  "THÔNG TIN NGƯỜI BỆNH": {
+    "Họ tên người bệnh": "<string: Họ và tên bệnh nhân>",
+    "Tuổi": "<string: Tuổi bệnh nhân, ví dụ '67 tuổi'>",
+    "Giới tính": "<string: Giới tính, ví dụ 'Nam' hoặc 'Nữ'>",
+    "Giường": "<string|null: Mã giường bệnh>",
+    "Buồng": "<string|null: Tên buồng bệnh>",
+    "BMI": "<number|null: Chỉ số BMI>",
+    "Vào viện": "<string|null: Ngày vào viện>",
+    "Ra viện": "<string|null: Ngày ra viện>",
+    "Chẩn bệnh": "<string: Chẩn đoán bệnh chính>",
+    "Bệnh kèm theo": "<string|null: Các bệnh kèm theo, phân cách bằng dấu />"
+  },
+  "BẢNG THEO DÕI CHỨC NĂNG SỐNG": [
+    {
+      "Ngày, tháng": "<string: Ngày tháng theo dõi, định dạng dd/mm>",
+      "Giờ": "<string: Giờ theo dõi, định dạng hh:mm>",
+      "Mạch (L/ph)": "<number|string|null: Nhịp mạch, đơn vị lần/phút>",
+      "Nhiệt độ (°C)": "<number|string|null: Nhiệt độ cơ thể, đơn vị độ C>",
+      "1. Huyết áp (mmHg)": "<string|null: Huyết áp, định dạng tâm thu/tâm trương>",
+      "2. Cân nặng (kg)": "<number|null: Cân nặng, đơn vị kg>",
+      "3. Nhịp thở (lần/phút)": "<number|null: Nhịp thở, đơn vị lần/phút>",
+      "4. ": "<string|null: Cột theo dõi bổ sung 4>",
+      "5. 5. Cột 5": "<string|null: Cột theo dõi bổ sung 5>",
+      "Điều dưỡng": "<string|null: Họ tên điều dưỡng theo dõi>"
+    }
+  ]
+}
