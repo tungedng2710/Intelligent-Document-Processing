@@ -8,7 +8,8 @@ services:
     command: ["uvicorn", "app.healthcare_api:classify_app", "--host", "0.0.0.0", "--port", "7871"]
     environment:
       OLLAMA_BASE_URL: ${CONTAINER_OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      CLASSIFIER_MODEL: ${CLASSIFIER_MODEL:-qwen3.5:cloud}
+      CLASSIFIER_MODEL: ${CLASSIFIER_MODEL:-qwen3.5:9b-bf16}
+      PDF_RENDER_DPI: ${PDF_RENDER_DPI:-200}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -33,9 +34,10 @@ services:
     command: ["uvicorn", "app.healthcare_api:extraction_app", "--host", "0.0.0.0", "--port", "7872"]
     environment:
       OLLAMA_BASE_URL: ${CONTAINER_OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      EXTRACTOR_MODEL: ${EXTRACTOR_MODEL:-qwen3.5:cloud}
+      EXTRACTOR_MODEL: ${EXTRACTOR_MODEL:-qwen3.5:9b-bf16}
       DEFAULT_PROMPT_TEMPLATE: ${DEFAULT_PROMPT_TEMPLATE:-healthcare_types/prompt_with_template.txt}
       DEFAULT_JSON_TEMPLATE: ${DEFAULT_JSON_TEMPLATE:-healthcare_types/page-04-template.json}
+      PDF_RENDER_DPI: ${PDF_RENDER_DPI:-200}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -60,10 +62,11 @@ services:
     command: ["uvicorn", "app.healthcare_api:healthcare_pipeline_app", "--host", "0.0.0.0", "--port", "7865"]
     environment:
       OLLAMA_BASE_URL: ${CONTAINER_OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      CLASSIFIER_MODEL: ${CLASSIFIER_MODEL:-qwen3.5:cloud}
-      EXTRACTOR_MODEL: ${EXTRACTOR_MODEL:-qwen3.5:cloud}
+      CLASSIFIER_MODEL: ${CLASSIFIER_MODEL:-qwen3.5:9b-bf16}
+      EXTRACTOR_MODEL: ${EXTRACTOR_MODEL:-qwen3.5:9b-bf16}
       TEMPLATES_DIR: ${TEMPLATES_DIR:-/app/data/prompts}
       OUTPUT_DIR: ${OUTPUT_DIR:-/app/output}
+      PDF_RENDER_DPI: ${PDF_RENDER_DPI:-200}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:

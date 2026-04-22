@@ -38,11 +38,11 @@ The recommended entry point. Internally calls classify, then extraction.
 
 #### `POST /classify`
 
-Classify a single document image.
+Classify a single document image or PDF (uses page 1 for PDF).
 
 ```bash
 curl -X POST http://localhost:7865/classify \
-  -F "file=@/path/to/document.png"
+  -F "file=@/path/to/document.pdf"
 ```
 
 Response:
@@ -58,11 +58,11 @@ Response:
 
 #### `POST /extraction`
 
-Classify then extract structured JSON from a single document image.
+Classify then extract structured JSON from a single document image or PDF.
 
 ```bash
 curl -X POST http://localhost:7865/extraction \
-  -F "file=@/path/to/document.png"
+  -F "file=@/path/to/document.pdf"
 ```
 
 Response:
@@ -83,14 +83,14 @@ Legacy full-pipeline endpoint (equivalent to `/extraction`).
 
 ```bash
 curl -X POST http://localhost:7865/process \
-  -F "file=@/path/to/document.png"
+  -F "file=@/path/to/document.pdf"
 ```
 
 ### Port 7871 — Classify API
 
 ```bash
 curl -X POST http://localhost:7871/classify \
-  -F "file=@/path/to/document.png"
+  -F "file=@/path/to/document.pdf"
 ```
 
 ### Port 7872 — Extraction API
@@ -99,7 +99,7 @@ Requires explicit template paths:
 
 ```bash
 curl -X POST http://localhost:7872/extract \
-  -F "file=@/path/to/document.png" \
+  -F "file=@/path/to/document.pdf" \
   -F "prompt_template_path=healthcare_types/prompt_with_template.txt" \
   -F "json_template_path=healthcare_types/page-03-template.json"
 ```
@@ -109,8 +109,8 @@ curl -X POST http://localhost:7872/extract \
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `ollama_url` | `$OLLAMA_BASE_URL` | Ollama server URL |
-| `classifier_model` | `$CLASSIFIER_MODEL` (`qwen3.5:cloud`) | Model used for classification |
-| `extractor_model` | `$EXTRACTOR_MODEL` (`qwen3.5:cloud`) | Model used for extraction |
+| `classifier_model` | `$CLASSIFIER_MODEL` (`qwen3.5:9b-bf16`) | Model used for classification |
+| `extractor_model` | `$EXTRACTOR_MODEL` (`qwen3.5:9b-bf16`) | Model used for extraction |
 | `output_subdir` | `api` | Sub-directory under `/app/output` for saved JSON |
 
 ## Supported Document Types
@@ -132,10 +132,11 @@ curl -X POST http://localhost:7872/extract \
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `CONTAINER_OLLAMA_BASE_URL` | `http://host.docker.internal:7860` | Ollama URL inside container |
-| `CLASSIFIER_MODEL` | `qwen3.5:cloud` | Classification model |
-| `EXTRACTOR_MODEL` | `qwen3.5:cloud` | Extraction model |
+| `CLASSIFIER_MODEL` | `qwen3.5:9b-bf16` | Classification model |
+| `EXTRACTOR_MODEL` | `qwen3.5:9b-bf16` | Extraction model |
 | `TEMPLATES_DIR` | `/app/data/prompts` | Base directory for prompt/JSON templates |
 | `OUTPUT_DIR` | `/app/output` | Output directory for extracted JSON files |
+| `PDF_RENDER_DPI` | `200` | DPI used to render page 1 when uploading PDF |
 
 Override at startup:
 

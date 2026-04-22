@@ -5,6 +5,7 @@ import os
 import tempfile
 from pathlib import Path
 
+import fitz
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 
 from scripts.classify_doc import MODEL_NAME as DEFAULT_CLASSIFIER_MODEL
@@ -30,6 +31,7 @@ DEFAULT_JSON_TEMPLATE = os.getenv(
     "DEFAULT_JSON_TEMPLATE",
     "healthcare_types/page-04-template.json",
 )
+PDF_RENDER_DPI = int(os.getenv("PDF_RENDER_DPI", "200"))
 ALLOWED_CONTENT_TYPES = {
     "image/png",
     "image/jpeg",
@@ -37,6 +39,7 @@ ALLOWED_CONTENT_TYPES = {
     "image/webp",
     "image/tiff",
     "image/bmp",
+    "application/pdf",
 }
 
 classify_app = FastAPI(title="Healthcare Classify API", version="1.0.0")
@@ -44,12 +47,15 @@ extraction_app = FastAPI(title="Healthcare Extraction API", version="1.0.0")
 healthcare_pipeline_app = FastAPI(title="Healthcare Ollama Pipeline API", version="1.0.0")
 
 
-def _ensure_image(file: UploadFile) -> str:
+def _ensure_supported_upload(file: UploadFile) -> str:
     content_type = file.content_type or ""
     if content_type not in ALLOWED_CONTENT_TYPES:
         raise HTTPException(
             status_code=400,
-            detail=f"Expected an image upload, got {content_type or 'unknown content type'}",
+            detail=(
+                "Expected an image or PDF upload, "
+                f"got {content_type or 'unknown content type'}"
+            ),
         )
     return content_type
 
@@ -73,6 +79,24 @@ def _write_temp_upload(file_bytes: bytes, filename: str, suffix: str) -> Path:
         return Path(temp_file.name)
 
 
+def _prepare_upload_image(file: UploadFile, file_bytes: bytes, content_type: str) -> Path:
+    if content_type == "application/pdf":
+        try:
+            with fitz.open(stream=file_bytes, filetype="pdf") as doc:
+                if not doc:
+                    raise HTTPException(status_code=400, detail="PDF has no pages")
+                pix = doc[0].get_pixmap(dpi=PDF_RENDER_DPI)
+                image_bytes = pix.tobytes("png")
+            return _write_temp_upload(image_bytes, file.filename or "upload", ".png")
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=f"Failed to parse PDF: {exc}") from exc
+
+    suffix = Path(file.filename or "upload.png").suffix or ".png"
+    return _write_temp_upload(file_bytes, file.filename or "upload", suffix)
+
+
 @classify_app.get("/")
 def classify_health() -> dict[str, str]:
     return {
@@ -89,13 +113,12 @@ async def classify_endpoint(
     ollama_url: str = Form(default=os.getenv("OLLAMA_BASE_URL", DEFAULT_OLLAMA_URL)),
     model: str = Form(default=os.getenv("CLASSIFIER_MODEL", DEFAULT_CLASSIFIER_MODEL)),
 ) -> dict[str, str | None]:
-    _ensure_image(file)
+    content_type = _ensure_supported_upload(file)
     file_bytes = await file.read()
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Empty file")
 
-    suffix = Path(file.filename or "upload.png").suffix or ".png"
-    temp_path = _write_temp_upload(file_bytes, file.filename or "upload", suffix)
+    temp_path = _prepare_upload_image(file, file_bytes, content_type)
 
     try:
         document_type, template_filename = classify_document(
@@ -135,7 +158,7 @@ async def extraction_endpoint(
     ollama_url: str = Form(default=os.getenv("OLLAMA_BASE_URL", DEFAULT_OLLAMA_URL)),
     model: str = Form(default=os.getenv("EXTRACTOR_MODEL", DEFAULT_EXTRACTOR_MODEL)),
 ) -> dict[str, object]:
-    _ensure_image(file)
+    content_type = _ensure_supported_upload(file)
     file_bytes = await file.read()
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Empty file")
@@ -144,8 +167,7 @@ async def extraction_endpoint(
     with _resolve_template_path(json_template_path).open(encoding="utf-8") as template_file:
         json_template = json.load(template_file)
 
-    suffix = Path(file.filename or "upload.png").suffix or ".png"
-    temp_path = _write_temp_upload(file_bytes, file.filename or "upload", suffix)
+    temp_path = _prepare_upload_image(file, file_bytes, content_type)
 
     try:
         extracted_data = extract_information(
@@ -191,13 +213,12 @@ async def healthcare_pipeline_endpoint(
     classifier_model: str = Form(default=os.getenv("CLASSIFIER_MODEL", DEFAULT_CLASSIFIER_MODEL)),
     extractor_model: str = Form(default=os.getenv("EXTRACTOR_MODEL", DEFAULT_EXTRACTOR_MODEL)),
 ) -> dict[str, object]:
-    _ensure_image(file)
+    content_type = _ensure_supported_upload(file)
     file_bytes = await file.read()
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Empty file")
 
-    suffix = Path(file.filename or "upload.png").suffix or ".png"
-    temp_path = _write_temp_upload(file_bytes, file.filename or "upload", suffix)
+    temp_path = _prepare_upload_image(file, file_bytes, content_type)
     output_dir = OUTPUT_DIR / output_subdir
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -227,13 +248,12 @@ async def healthcare_pipeline_classify_endpoint(
     classifier_model: str = Form(default=os.getenv("CLASSIFIER_MODEL", DEFAULT_CLASSIFIER_MODEL)),
     extractor_model: str = Form(default=os.getenv("EXTRACTOR_MODEL", DEFAULT_EXTRACTOR_MODEL)),
 ) -> dict[str, object]:
-    _ensure_image(file)
+    content_type = _ensure_supported_upload(file)
     file_bytes = await file.read()
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Empty file")
 
-    suffix = Path(file.filename or "upload.png").suffix or ".png"
-    temp_path = _write_temp_upload(file_bytes, file.filename or "upload", suffix)
+    temp_path = _prepare_upload_image(file, file_bytes, content_type)
 
     pipeline = HealthcareOllamaPipeline(
         templates_base_dir=templates_dir,
@@ -262,13 +282,12 @@ async def healthcare_pipeline_extraction_endpoint(
     classifier_model: str = Form(default=os.getenv("CLASSIFIER_MODEL", DEFAULT_CLASSIFIER_MODEL)),
     extractor_model: str = Form(default=os.getenv("EXTRACTOR_MODEL", DEFAULT_EXTRACTOR_MODEL)),
 ) -> dict[str, object]:
-    _ensure_image(file)
+    content_type = _ensure_supported_upload(file)
     file_bytes = await file.read()
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Empty file")
 
-    suffix = Path(file.filename or "upload.png").suffix or ".png"
-    temp_path = _write_temp_upload(file_bytes, file.filename or "upload", suffix)
+    temp_path = _prepare_upload_image(file, file_bytes, content_type)
     output_dir = OUTPUT_DIR / output_subdir
     output_dir.mkdir(parents=True, exist_ok=True)
 
