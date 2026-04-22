@@ -6,14 +6,14 @@ Usage (folder mode):
         --data_path data/r3_bank_reports/train_data_v1.2 \
         --prompt data/prompts/bank_report_ver_1.0.txt \
         --model qwen3.5:2b-bf16 \
-        --port 0.0.0.0:7860
+        --port 0.0.0.0:11434
 
 Usage (single or multi-page image mode):
     python scripts/call_ollama.py \
         --images page1.png page2.png \
         --prompt data/prompts/bank_report_ver_1.0.txt \
         --model qwen3.5:2b-bf16 \
-        --port 0.0.0.0:7860 \
+        --port 0.0.0.0:11434 \
         --output result.json   # optional
 """
 
@@ -243,8 +243,8 @@ def main():
     parser.add_argument(
         "--port",
         type=str,
-        default="0.0.0.0:7860",
-        help="Ollama host:port (e.g. 0.0.0.0:7860)",
+        default="0.0.0.0:11434",
+        help="Ollama host:port (e.g. 0.0.0.0:11434)",
     )
     args = parser.parse_args()
 

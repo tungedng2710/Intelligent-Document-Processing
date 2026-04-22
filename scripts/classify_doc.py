@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Tuple, Optional
 
 # Configuration
-OLLAMA_BASE_URL = "http://localhost:7860"
+OLLAMA_BASE_URL = "http://localhost:11434"
 MODEL_NAME = "qwen3.5:9b-bf16"
 
 # Document type mappings from doctype.md
@@ -37,7 +37,7 @@ def classify_document(image_path: str, base_url: str = OLLAMA_BASE_URL, model: s
     
     Args:
         image_path: Path to the image file
-        base_url: Ollama base URL (default: http://localhost:7860)
+        base_url: Ollama base URL (default: http://localhost:11434)
         model: Model name (default: qwen3.5:9b-bf16)
     
     Returns:
@@ -90,7 +90,7 @@ Please respond with ONLY the exact document type name from the list above. Do no
     
     except requests.exceptions.ConnectionError:
         print(f"Error: Cannot connect to Ollama at {base_url}")
-        print(f"Please ensure Ollama is running on port 7860")
+        print(f"Please ensure Ollama is running on port 11434")
         return None, None
     except Exception as e:
         print(f"Error during classification: {str(e)}")
@@ -105,7 +105,7 @@ def main():
         print(f"Default Model: {MODEL_NAME}")
         print("\nExample:")
         print("  python classify_doc.py /path/to/document.png")
-        print("  python classify_doc.py /path/to/document.png http://localhost:7860 qwen3.5:9b-bf16")
+        print("  python classify_doc.py /path/to/document.png http://localhost:11434 qwen3.5:9b-bf16")
         sys.exit(1)
     
     image_path = sys.argv[1]

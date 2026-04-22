@@ -10,7 +10,7 @@ parser.add_argument("--json-template", required=True, help="Path to the JSON tem
 parser.add_argument("--image", required=True, help="Path to the input image file")
 parser.add_argument("--output-dir", required=True, help="Directory to save the output JSON")
 parser.add_argument("--model", default="gemma4:e4b-it-bf16", help="Ollama model name")
-parser.add_argument("--host", default="http://0.0.0.0:7860", help="Ollama host URL")
+parser.add_argument("--host", default="http://0.0.0.0:11434", help="Ollama host URL")
 args = parser.parse_args()
 
 # --- Load inputs ---

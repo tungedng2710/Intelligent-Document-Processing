@@ -156,7 +156,7 @@ curl -X POST http://localhost:9890/parse \
 ```bash
 # Start Gradio app
 cd src/api && python app.py
-# Open http://localhost:7860
+# Open http://localhost:11434
 ```
 
 ## 📖 Usage
