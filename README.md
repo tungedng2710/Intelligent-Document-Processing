@@ -148,3 +148,28 @@ CLASSIFIER_MODEL=qwen3.5:9b-bf16 EXTRACTOR_MODEL=gemma4:e4b-it-bf16 docker compo
 
 - Docker + Docker Compose
 - Ollama running on port `7860` with the required models pulled
+
+## Troubleshooting 502 (Linux)
+
+If API endpoints return `502 Bad Gateway`, the container usually cannot reach Ollama even though Ollama works on the host.
+
+Common cause on Linux: Ollama is bound to `127.0.0.1:11434` only.
+
+Check host binding:
+
+```bash
+ss -ltnp | grep 11434
+```
+
+If you see `127.0.0.1:11434`, restart Ollama bound to all interfaces:
+
+```bash
+pkill ollama || true
+OLLAMA_HOST=0.0.0.0:11434 ollama serve
+```
+
+Then restart the API stack:
+
+```bash
+docker compose up -d --build
+```
