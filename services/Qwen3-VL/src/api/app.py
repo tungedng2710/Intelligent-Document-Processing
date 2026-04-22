@@ -193,7 +193,7 @@ if __name__ == "__main__":
     # Launch the interface
     demo.launch(
         server_name="0.0.0.0",
-        server_port=7860,
+        server_port=11434,
         share=False,
         show_error=True
     )

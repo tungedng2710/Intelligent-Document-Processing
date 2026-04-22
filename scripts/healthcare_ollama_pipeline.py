@@ -18,7 +18,7 @@ from typing import Tuple, Optional, Dict, Any
 import requests
 
 # Configuration
-OLLAMA_BASE_URL = "http://localhost:7860"
+OLLAMA_BASE_URL = "http://localhost:11434"
 CLASSIFIER_MODEL = "qwen3.5:9b-bf16"
 EXTRACTOR_MODEL = "gemma4:e4b-it-bf16"  # Can be overridden
 
@@ -143,7 +143,7 @@ Please respond with ONLY the exact document type name from the list above. Do no
     
     except requests.exceptions.ConnectionError:
         print(f"Error: Cannot connect to Ollama at {base_url}")
-        print(f"Please ensure Ollama is running on port 7860")
+        print(f"Please ensure Ollama is running on port 11434")
         return None, None
     except Exception as e:
         print(f"Error during classification: {str(e)}")

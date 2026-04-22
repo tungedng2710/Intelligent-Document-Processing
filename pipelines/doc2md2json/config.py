@@ -6,7 +6,7 @@ import os
 
 
 # --- Ollama server ---
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:7860")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
 # --- VLLM server ---
 VLLM_BASE_URL = os.getenv("VLLM_BASE_URL", "http://localhost:9888")
