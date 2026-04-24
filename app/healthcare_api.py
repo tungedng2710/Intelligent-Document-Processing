@@ -11,6 +11,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from scripts.classify_doc import MODEL_NAME as DEFAULT_CLASSIFIER_MODEL
 from scripts.classify_doc import OLLAMA_BASE_URL as DEFAULT_OLLAMA_URL
 from scripts.classify_doc import classify_document
+from scripts.healthcare_ollama_pipeline import DOCUMENT_TYPES
 from scripts.healthcare_ollama_pipeline import EXTRACTOR_MODEL as DEFAULT_EXTRACTOR_MODEL
 from scripts.healthcare_ollama_pipeline import (
     HealthcareOllamaPipeline,
@@ -276,37 +277,56 @@ async def healthcare_pipeline_classify_endpoint(
 @healthcare_pipeline_app.post("/extraction")
 async def healthcare_pipeline_extraction_endpoint(
     file: UploadFile = File(...),
+    document_type: str = Form(default="PHIẾU KHÁM BỆNH VÀO VIỆN"),
     output_subdir: str = Form(default="api"),
     templates_dir: str = Form(default=str(TEMPLATES_DIR)),
     ollama_url: str = Form(default=os.getenv("OLLAMA_BASE_URL", DEFAULT_OLLAMA_URL)),
-    classifier_model: str = Form(default=os.getenv("CLASSIFIER_MODEL", DEFAULT_CLASSIFIER_MODEL)),
     extractor_model: str = Form(default=os.getenv("EXTRACTOR_MODEL", DEFAULT_EXTRACTOR_MODEL)),
 ) -> dict[str, object]:
+    if document_type not in DOCUMENT_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown document_type '{document_type}'. Valid values: {list(DOCUMENT_TYPES.keys())}",
+        )
+
     content_type = _ensure_supported_upload(file)
     file_bytes = await file.read()
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Empty file")
 
+    template_info = DOCUMENT_TYPES[document_type]
+    templates_base = Path(templates_dir)
+    prompt_template, json_template = load_templates(template_info, templates_base)
+    if not prompt_template or not json_template:
+        raise HTTPException(status_code=502, detail="Failed to load templates for the given document type")
+
     temp_path = _prepare_upload_image(file, file_bytes, content_type)
     output_dir = OUTPUT_DIR / output_subdir
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    pipeline = HealthcareOllamaPipeline(
-        templates_base_dir=templates_dir,
-        ollama_base_url=ollama_url,
-        classifier_model=classifier_model,
-        extractor_model=extractor_model,
-    )
-
     try:
-        result = pipeline.extraction(
+        extracted_data = extract_information(
             image_path=str(temp_path),
-            output_dir=str(output_dir),
+            prompt_template=prompt_template,
+            json_template=json_template,
+            base_url=ollama_url,
+            model=extractor_model,
         )
     finally:
         temp_path.unlink(missing_ok=True)
 
-    if result.get("status") != "success":
-        raise HTTPException(status_code=502, detail=result)
+    if extracted_data is None:
+        raise HTTPException(status_code=502, detail="Information extraction failed")
 
-    return result
+    output_path = None
+    output_path_obj = output_dir / Path(file.filename or "upload").with_suffix(".json").name
+    output_path_obj.write_text(json.dumps(extracted_data, ensure_ascii=False, indent=2))
+    output_path = str(output_path_obj)
+
+    return {
+        "status": "success",
+        "document_type": document_type,
+        "template_filename": template_info.get("template"),
+        "extracted_data": extracted_data,
+        "output_path": output_path,
+    }

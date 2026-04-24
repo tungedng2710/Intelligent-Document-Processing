@@ -7,7 +7,7 @@ from typing import Tuple, Optional
 
 # Configuration
 OLLAMA_BASE_URL = "http://localhost:11434"
-MODEL_NAME = "qwen3.5:cloud"
+MODEL_NAME = "qwen3.5:2b"
 
 # Document type mappings from doctype.md
 DOCUMENT_TYPES = {
