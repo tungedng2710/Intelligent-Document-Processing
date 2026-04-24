@@ -19,7 +19,7 @@ import requests
 
 # Configuration
 OLLAMA_BASE_URL = "http://localhost:11434"
-CLASSIFIER_MODEL = "qwen3.5:9b-bf16"
+CLASSIFIER_MODEL = "qwen3.5:cloud"
 EXTRACTOR_MODEL = "gemma4:e4b-it-bf16"  # Can be overridden
 
 # Document type mappings from healthcare/hoso1/doctype.md

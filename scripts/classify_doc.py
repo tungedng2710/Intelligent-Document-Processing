@@ -7,7 +7,7 @@ from typing import Tuple, Optional
 
 # Configuration
 OLLAMA_BASE_URL = "http://localhost:11434"
-MODEL_NAME = "qwen3.5:9b-bf16"
+MODEL_NAME = "qwen3.5:cloud"
 
 # Document type mappings from doctype.md
 DOCUMENT_TYPES = {
@@ -38,7 +38,7 @@ def classify_document(image_path: str, base_url: str = OLLAMA_BASE_URL, model: s
     Args:
         image_path: Path to the image file
         base_url: Ollama base URL (default: http://localhost:11434)
-        model: Model name (default: qwen3.5:9b-bf16)
+        model: Model name (default: qwen3.5:cloud)
     
     Returns:
         Tuple of (document_type, template_filename) or (None, None) if classification fails
@@ -105,7 +105,7 @@ def main():
         print(f"Default Model: {MODEL_NAME}")
         print("\nExample:")
         print("  python classify_doc.py /path/to/document.png")
-        print("  python classify_doc.py /path/to/document.png http://localhost:11434 qwen3.5:9b-bf16")
+        print("  python classify_doc.py /path/to/document.png http://localhost:11434 qwen3.5:cloud")
         sys.exit(1)
     
     image_path = sys.argv[1]
