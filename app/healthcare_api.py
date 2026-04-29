@@ -307,6 +307,7 @@ async def healthcare_pipeline_extraction_endpoint(
     try:
         extracted_data = extract_information(
             image_path=str(temp_path),
+            
             prompt_template=prompt_template,
             json_template=json_template,
             base_url=ollama_url,
