@@ -80,13 +80,16 @@ def _write_temp_upload(file_bytes: bytes, filename: str, suffix: str) -> Path:
         return Path(temp_file.name)
 
 
-def _prepare_upload_image(file: UploadFile, file_bytes: bytes, content_type: str) -> Path:
+def _prepare_upload_image(file: UploadFile, file_bytes: bytes, content_type: str, page: int = 1) -> Path:
     if content_type == "application/pdf":
         try:
             with fitz.open(stream=file_bytes, filetype="pdf") as doc:
                 if not doc:
                     raise HTTPException(status_code=400, detail="PDF has no pages")
-                pix = doc[0].get_pixmap(dpi=PDF_RENDER_DPI)
+                page_idx = max(0, page - 1)
+                if page_idx >= len(doc):
+                    raise HTTPException(status_code=400, detail=f"Page {page} out of range (document has {len(doc)} pages)")
+                pix = doc[page_idx].get_pixmap(dpi=PDF_RENDER_DPI)
                 image_bytes = pix.tobytes("png")
             return _write_temp_upload(image_bytes, file.filename or "upload", ".png")
         except HTTPException:
@@ -96,6 +99,37 @@ def _prepare_upload_image(file: UploadFile, file_bytes: bytes, content_type: str
 
     suffix = Path(file.filename or "upload.png").suffix or ".png"
     return _write_temp_upload(file_bytes, file.filename or "upload", suffix)
+
+
+def _render_pdf_pages(file_bytes: bytes, page_start: int, page_end: int) -> list[Path]:
+    """Render PDF pages page_start..page_end (1-based, inclusive) to temp PNG files.
+    page_end=0 means the last page of the document.
+    """
+    temp_paths: list[Path] = []
+    try:
+        with fitz.open(stream=file_bytes, filetype="pdf") as doc:
+            total = len(doc)
+            if not total:
+                raise HTTPException(status_code=400, detail="PDF has no pages")
+            start_idx = max(0, page_start - 1)
+            end_idx = total - 1 if page_end == 0 else min(total - 1, page_end - 1)
+            if start_idx > end_idx:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid page range {page_start}-{page_end} (document has {total} pages)",
+                )
+            for idx in range(start_idx, end_idx + 1):
+                pix = doc[idx].get_pixmap(dpi=PDF_RENDER_DPI)
+                temp_paths.append(_write_temp_upload(pix.tobytes("png"), f"page-{idx + 1}", ".png"))
+    except HTTPException:
+        for p in temp_paths:
+            p.unlink(missing_ok=True)
+        raise
+    except Exception as exc:
+        for p in temp_paths:
+            p.unlink(missing_ok=True)
+        raise HTTPException(status_code=400, detail=f"Failed to parse PDF: {exc}") from exc
+    return temp_paths
 
 
 @classify_app.get("/")
@@ -158,6 +192,8 @@ async def extraction_endpoint(
     json_template_path: str = Form(default=DEFAULT_JSON_TEMPLATE),
     ollama_url: str = Form(default=os.getenv("OLLAMA_BASE_URL", DEFAULT_OLLAMA_URL)),
     model: str = Form(default=os.getenv("EXTRACTOR_MODEL", DEFAULT_EXTRACTOR_MODEL)),
+    page_start: int = Form(default=1),
+    page_end: int | None = Form(default=None),
 ) -> dict[str, object]:
     content_type = _ensure_supported_upload(file)
     file_bytes = await file.read()
@@ -168,28 +204,40 @@ async def extraction_endpoint(
     with _resolve_template_path(json_template_path).open(encoding="utf-8") as template_file:
         json_template = json.load(template_file)
 
-    temp_path = _prepare_upload_image(file, file_bytes, content_type)
+    multi_page = content_type == "application/pdf" and page_end is not None and (page_end == 0 or page_end != page_start)
+    if multi_page:
+        temp_paths = _render_pdf_pages(file_bytes, page_start, page_end)
+    else:
+        temp_paths = [_prepare_upload_image(file, file_bytes, content_type, page=page_start)]
 
+    page_results = []
     try:
-        extracted_data = extract_information(
-            image_path=str(temp_path),
-            prompt_template=prompt_template,
-            json_template=json_template,
-            base_url=ollama_url,
-            model=model,
-        )
+        for i, temp_path in enumerate(temp_paths):
+            page_num = (page_start + i) if multi_page else page_start
+            extracted_data = extract_information(
+                image_path=str(temp_path),
+                prompt_template=prompt_template,
+                json_template=json_template,
+                base_url=ollama_url,
+                model=model,
+            )
+            if extracted_data is None:
+                raise HTTPException(status_code=502, detail=f"Information extraction failed on page {page_num}")
+            page_results.append({"page": page_num, "extracted_data": extracted_data})
     finally:
-        temp_path.unlink(missing_ok=True)
+        for temp_path in temp_paths:
+            temp_path.unlink(missing_ok=True)
 
-    if extracted_data is None:
-        raise HTTPException(status_code=502, detail="Information extraction failed")
-
-    return {
+    response: dict[str, object] = {
         "status": "success",
         "prompt_template_path": str(_resolve_template_path(prompt_template_path)),
         "json_template_path": str(_resolve_template_path(json_template_path)),
-        "extracted_data": extracted_data,
     }
+    if multi_page:
+        response["pages"] = page_results
+    else:
+        response["extracted_data"] = page_results[0]["extracted_data"]
+    return response
 
 
 @healthcare_pipeline_app.get("/")
@@ -213,32 +261,53 @@ async def healthcare_pipeline_endpoint(
     ollama_url: str = Form(default=os.getenv("OLLAMA_BASE_URL", DEFAULT_OLLAMA_URL)),
     classifier_model: str = Form(default=os.getenv("CLASSIFIER_MODEL", DEFAULT_CLASSIFIER_MODEL)),
     extractor_model: str = Form(default=os.getenv("EXTRACTOR_MODEL", DEFAULT_EXTRACTOR_MODEL)),
+    page_start: int = Form(default=1),
+    page_end: int | None = Form(default=None),
 ) -> dict[str, object]:
     content_type = _ensure_supported_upload(file)
     file_bytes = await file.read()
     if not file_bytes:
         raise HTTPException(status_code=400, detail="Empty file")
 
-    temp_path = _prepare_upload_image(file, file_bytes, content_type)
     output_dir = OUTPUT_DIR / output_subdir
     output_dir.mkdir(parents=True, exist_ok=True)
+    stem = Path(file.filename or "upload").stem
 
+    multi_page = content_type == "application/pdf" and page_end is not None and (page_end == 0 or page_end != page_start)
+    if multi_page:
+        temp_paths = _render_pdf_pages(file_bytes, page_start, page_end)
+    else:
+        temp_paths = [_prepare_upload_image(file, file_bytes, content_type, page=page_start)]
+
+    page_results = []
     try:
-        result = process_document(
-            image_path=str(temp_path),
-            output_dir=str(output_dir),
-            templates_base_dir=templates_dir,
-            ollama_base_url=ollama_url,
-            classifier_model=classifier_model,
-            extractor_model=extractor_model,
-        )
+        for i, temp_path in enumerate(temp_paths):
+            page_num = (page_start + i) if multi_page else page_start
+            result = process_document(
+                image_path=str(temp_path),
+                output_dir=str(output_dir),
+                templates_base_dir=templates_dir,
+                ollama_base_url=ollama_url,
+                classifier_model=classifier_model,
+                extractor_model=extractor_model,
+            )
+            if result.get("status") != "success":
+                raise HTTPException(status_code=502, detail={**result, "page": page_num})
+            if multi_page:
+                # rename output file to include page number
+                out_src = result.get("output_path")
+                if out_src:
+                    out_dst = output_dir / f"{stem}_page{page_num}.json"
+                    Path(out_src).rename(out_dst)
+                    result["output_path"] = str(out_dst)
+            page_results.append({"page": page_num, **result})
     finally:
-        temp_path.unlink(missing_ok=True)
+        for temp_path in temp_paths:
+            temp_path.unlink(missing_ok=True)
 
-    if result.get("status") != "success":
-        raise HTTPException(status_code=502, detail=result)
-
-    return result
+    if multi_page:
+        return {"status": "success", "pages": page_results}
+    return page_results[0]
 
 
 @healthcare_pipeline_app.post("/classify")
@@ -282,6 +351,8 @@ async def healthcare_pipeline_extraction_endpoint(
     templates_dir: str = Form(default=str(TEMPLATES_DIR)),
     ollama_url: str = Form(default=os.getenv("OLLAMA_BASE_URL", DEFAULT_OLLAMA_URL)),
     extractor_model: str = Form(default=os.getenv("EXTRACTOR_MODEL", DEFAULT_EXTRACTOR_MODEL)),
+    page_start: int = Form(default=1),
+    page_end: int | None = Form(default=None),
 ) -> dict[str, object]:
     if document_type not in DOCUMENT_TYPES:
         raise HTTPException(
@@ -300,34 +371,203 @@ async def healthcare_pipeline_extraction_endpoint(
     if not prompt_template or not json_template:
         raise HTTPException(status_code=502, detail="Failed to load templates for the given document type")
 
-    temp_path = _prepare_upload_image(file, file_bytes, content_type)
+    multi_page = content_type == "application/pdf" and page_end is not None and (page_end == 0 or page_end != page_start)
+    if multi_page:
+        temp_paths = _render_pdf_pages(file_bytes, page_start, page_end)
+    else:
+        temp_paths = [_prepare_upload_image(file, file_bytes, content_type, page=page_start)]
+
     output_dir = OUTPUT_DIR / output_subdir
     output_dir.mkdir(parents=True, exist_ok=True)
+    stem = Path(file.filename or "upload").stem
 
+    page_results = []
     try:
-        extracted_data = extract_information(
-            image_path=str(temp_path),
-            
-            prompt_template=prompt_template,
-            json_template=json_template,
-            base_url=ollama_url,
-            model=extractor_model,
-        )
+        for i, temp_path in enumerate(temp_paths):
+            page_num = (page_start + i) if multi_page else page_start
+            extracted_data = extract_information(
+                image_path=str(temp_path),
+                prompt_template=prompt_template,
+                json_template=json_template,
+                base_url=ollama_url,
+                model=extractor_model,
+            )
+            if extracted_data is None:
+                raise HTTPException(status_code=502, detail=f"Information extraction failed on page {page_num}")
+            out_name = f"{stem}_page{page_num}.json" if multi_page else f"{stem}.json"
+            out_path = output_dir / out_name
+            out_path.write_text(json.dumps(extracted_data, ensure_ascii=False, indent=2))
+            page_results.append({"page": page_num, "extracted_data": extracted_data, "output_path": str(out_path)})
     finally:
-        temp_path.unlink(missing_ok=True)
+        for temp_path in temp_paths:
+            temp_path.unlink(missing_ok=True)
 
-    if extracted_data is None:
-        raise HTTPException(status_code=502, detail="Information extraction failed")
-
-    output_path = None
-    output_path_obj = output_dir / Path(file.filename or "upload").with_suffix(".json").name
-    output_path_obj.write_text(json.dumps(extracted_data, ensure_ascii=False, indent=2))
-    output_path = str(output_path_obj)
-
-    return {
+    response: dict[str, object] = {
         "status": "success",
         "document_type": document_type,
         "template_filename": template_info.get("template"),
-        "extracted_data": extracted_data,
-        "output_path": output_path,
     }
+    if multi_page:
+        response["pages"] = page_results
+    else:
+        response["extracted_data"] = page_results[0]["extracted_data"]
+        response["output_path"] = page_results[0]["output_path"]
+    return response
+
+
+@healthcare_pipeline_app.post("/classify_batch")
+async def healthcare_pipeline_classify_batch_endpoint(
+    file: UploadFile = File(...),
+    ollama_url: str = Form(default=os.getenv("OLLAMA_BASE_URL", DEFAULT_OLLAMA_URL)),
+    classifier_model: str = Form(default=os.getenv("CLASSIFIER_MODEL", DEFAULT_CLASSIFIER_MODEL)),
+    page_start: int = Form(default=1),
+    page_end: int | None = Form(default=None),
+) -> list[dict[str, object]]:
+    content_type = _ensure_supported_upload(file)
+    file_bytes = await file.read()
+    if not file_bytes:
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    # Non-PDF: single image treated as one page
+    if content_type != "application/pdf":
+        temp_path = _prepare_upload_image(file, file_bytes, content_type)
+        try:
+            doc_type, _ = classify_document(str(temp_path), base_url=ollama_url, model=classifier_model)
+        finally:
+            temp_path.unlink(missing_ok=True)
+        return [{"pages": [1], "document_type": doc_type or "UNKNOWN"}]
+
+    # Determine total pages to resolve effective_end
+    try:
+        with fitz.open(stream=file_bytes, filetype="pdf") as doc:
+            total_pages = len(doc)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Failed to parse PDF: {exc}") from exc
+    if not total_pages:
+        raise HTTPException(status_code=400, detail="PDF has no pages")
+
+    effective_end = total_pages if (page_end is None or page_end == 0) else page_end
+    temp_paths = _render_pdf_pages(file_bytes, page_start, effective_end)
+
+    page_classifications: list[tuple[int, str]] = []
+    try:
+        for i, temp_path in enumerate(temp_paths):
+            page_num = page_start + i
+            doc_type, _ = classify_document(str(temp_path), base_url=ollama_url, model=classifier_model)
+            page_classifications.append((page_num, doc_type or "UNKNOWN"))
+    finally:
+        for tp in temp_paths:
+            tp.unlink(missing_ok=True)
+
+    # Group consecutive pages sharing the same document type
+    groups: list[dict[str, object]] = []
+    for page_num, doc_type in page_classifications:
+        if groups and groups[-1]["document_type"] == doc_type:
+            groups[-1]["pages"].append(page_num)  # type: ignore[union-attr]
+        else:
+            groups.append({"pages": [page_num], "document_type": doc_type})
+
+    return groups
+
+
+@healthcare_pipeline_app.post("/extraction_batch")
+async def healthcare_pipeline_extraction_batch_endpoint(
+    file: UploadFile = File(...),
+    blocks: str = Form(...),
+    output_subdir: str = Form(default="api"),
+    templates_dir: str = Form(default=str(TEMPLATES_DIR)),
+    ollama_url: str = Form(default=os.getenv("OLLAMA_BASE_URL", DEFAULT_OLLAMA_URL)),
+    extractor_model: str = Form(default=os.getenv("EXTRACTOR_MODEL", DEFAULT_EXTRACTOR_MODEL)),
+) -> list[dict[str, object]]:
+    """Extract information for each block produced by /classify_batch.
+
+    ``blocks`` is the JSON array returned by /classify_batch:
+    [{"pages": [1, 2], "document_type": "..."}, ...]
+
+    Each block is processed as a group: all pages in the block are rendered and
+    extracted individually, then collected under a single result entry.
+    """
+    # Parse blocks
+    try:
+        block_list: list[dict] = json.loads(blocks)
+        if not isinstance(block_list, list):
+            raise ValueError("blocks must be a JSON array")
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid blocks JSON: {exc}") from exc
+
+    content_type = _ensure_supported_upload(file)
+    file_bytes = await file.read()
+    if not file_bytes:
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    output_dir = OUTPUT_DIR / output_subdir
+    output_dir.mkdir(parents=True, exist_ok=True)
+    stem = Path(file.filename or "upload").stem
+    templates_base = Path(templates_dir)
+
+    results: list[dict[str, object]] = []
+
+    for block in block_list:
+        document_type = block.get("document_type", "")
+        pages: list[int] = block.get("pages", [])
+
+        if not pages:
+            results.append({"document_type": document_type, "pages": [], "error": "No pages specified"})
+            continue
+
+        if document_type not in DOCUMENT_TYPES:
+            results.append({
+                "document_type": document_type,
+                "pages": pages,
+                "error": f"Unknown document_type '{document_type}'. Valid values: {list(DOCUMENT_TYPES.keys())}",
+            })
+            continue
+
+        template_info = DOCUMENT_TYPES[document_type]
+        prompt_template, json_template = load_templates(template_info, templates_base)
+        if not prompt_template or not json_template:
+            results.append({
+                "document_type": document_type,
+                "pages": pages,
+                "error": "Failed to load templates for the given document type",
+            })
+            continue
+
+        # Render pages for this block
+        if content_type == "application/pdf" and len(pages) > 1:
+            temp_paths = _render_pdf_pages(file_bytes, min(pages), max(pages))
+            rendered_page_nums = list(range(min(pages), max(pages) + 1))
+        else:
+            first_page = pages[0]
+            temp_paths = [_prepare_upload_image(file, file_bytes, content_type, page=first_page)]
+            rendered_page_nums = [first_page]
+
+        page_results: list[dict[str, object]] = []
+        try:
+            for temp_path, page_num in zip(temp_paths, rendered_page_nums):
+                extracted_data = extract_information(
+                    image_path=str(temp_path),
+                    prompt_template=prompt_template,
+                    json_template=json_template,
+                    base_url=ollama_url,
+                    model=extractor_model,
+                )
+                if extracted_data is None:
+                    page_results.append({"page": page_num, "error": "Extraction failed"})
+                    continue
+                out_name = f"{stem}_page{page_num}.json"
+                out_path = output_dir / out_name
+                out_path.write_text(json.dumps(extracted_data, ensure_ascii=False, indent=2))
+                page_results.append({"page": page_num, "extracted_data": extracted_data, "output_path": str(out_path)})
+        finally:
+            for tp in temp_paths:
+                tp.unlink(missing_ok=True)
+
+        results.append({
+            "document_type": document_type,
+            "pages": pages,
+            "template_filename": template_info.get("template"),
+            "page_results": page_results,
+        })
+
+    return results
