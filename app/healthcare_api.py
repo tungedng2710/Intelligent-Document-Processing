@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import functools
 import json
 import os
 import tempfile
@@ -194,7 +196,11 @@ async def extraction_endpoint(
     model: str = Form(default=os.getenv("EXTRACTOR_MODEL", DEFAULT_EXTRACTOR_MODEL)),
     page_start: int = Form(default=1),
     page_end: int | None = Form(default=None),
+    batch_size: int = Form(default=1),
 ) -> dict[str, object]:
+    if not 1 <= batch_size <= 3:
+        raise HTTPException(status_code=400, detail="batch_size must be between 1 and 3")
+
     content_type = _ensure_supported_upload(file)
     file_bytes = await file.read()
     if not file_bytes:
@@ -210,20 +216,35 @@ async def extraction_endpoint(
     else:
         temp_paths = [_prepare_upload_image(file, file_bytes, content_type, page=page_start)]
 
-    page_results = []
+    loop = asyncio.get_running_loop()
+
+    async def _run_extract(page_num: int, tp: Path) -> dict[str, object]:
+        fn = functools.partial(
+            extract_information,
+            image_path=str(tp),
+            prompt_template=prompt_template,
+            json_template=json_template,
+            base_url=ollama_url,
+            model=model,
+        )
+        data = await loop.run_in_executor(None, fn)
+        return {"page": page_num, "extracted_data": data}
+
+    page_results: list[dict[str, object]] = []
     try:
-        for i, temp_path in enumerate(temp_paths):
-            page_num = (page_start + i) if multi_page else page_start
-            extracted_data = extract_information(
-                image_path=str(temp_path),
-                prompt_template=prompt_template,
-                json_template=json_template,
-                base_url=ollama_url,
-                model=model,
+        for batch_start in range(0, len(temp_paths), batch_size):
+            batch_slice = temp_paths[batch_start: batch_start + batch_size]
+            batch_page_nums = [
+                (page_start + batch_start + j) if multi_page else page_start
+                for j in range(len(batch_slice))
+            ]
+            batch_results = await asyncio.gather(
+                *[_run_extract(pn, tp) for pn, tp in zip(batch_page_nums, batch_slice)]
             )
-            if extracted_data is None:
-                raise HTTPException(status_code=502, detail=f"Information extraction failed on page {page_num}")
-            page_results.append({"page": page_num, "extracted_data": extracted_data})
+            for res in batch_results:
+                if res["extracted_data"] is None:
+                    raise HTTPException(status_code=502, detail=f"Information extraction failed on page {res['page']}")
+                page_results.append(res)
     finally:
         for temp_path in temp_paths:
             temp_path.unlink(missing_ok=True)
@@ -353,7 +374,11 @@ async def healthcare_pipeline_extraction_endpoint(
     extractor_model: str = Form(default=os.getenv("EXTRACTOR_MODEL", DEFAULT_EXTRACTOR_MODEL)),
     page_start: int = Form(default=1),
     page_end: int | None = Form(default=None),
+    batch_size: int = Form(default=1),
 ) -> dict[str, object]:
+    if not 1 <= batch_size <= 3:
+        raise HTTPException(status_code=400, detail="batch_size must be between 1 and 3")
+
     if document_type not in DOCUMENT_TYPES:
         raise HTTPException(
             status_code=400,
@@ -381,23 +406,40 @@ async def healthcare_pipeline_extraction_endpoint(
     output_dir.mkdir(parents=True, exist_ok=True)
     stem = Path(file.filename or "upload").stem
 
-    page_results = []
+    loop = asyncio.get_running_loop()
+
+    async def _run_extract_pipeline(page_num: int, tp: Path) -> dict[str, object]:
+        fn = functools.partial(
+            extract_information,
+            image_path=str(tp),
+            prompt_template=prompt_template,
+            json_template=json_template,
+            base_url=ollama_url,
+            model=extractor_model,
+        )
+        data = await loop.run_in_executor(None, fn)
+        return {"page": page_num, "extracted_data": data}
+
+    page_results: list[dict[str, object]] = []
     try:
-        for i, temp_path in enumerate(temp_paths):
-            page_num = (page_start + i) if multi_page else page_start
-            extracted_data = extract_information(
-                image_path=str(temp_path),
-                prompt_template=prompt_template,
-                json_template=json_template,
-                base_url=ollama_url,
-                model=extractor_model,
+        for batch_start in range(0, len(temp_paths), batch_size):
+            batch_slice = temp_paths[batch_start: batch_start + batch_size]
+            batch_page_nums = [
+                (page_start + batch_start + j) if multi_page else page_start
+                for j in range(len(batch_slice))
+            ]
+            batch_results = await asyncio.gather(
+                *[_run_extract_pipeline(pn, tp) for pn, tp in zip(batch_page_nums, batch_slice)]
             )
-            if extracted_data is None:
-                raise HTTPException(status_code=502, detail=f"Information extraction failed on page {page_num}")
-            out_name = f"{stem}_page{page_num}.json" if multi_page else f"{stem}.json"
-            out_path = output_dir / out_name
-            out_path.write_text(json.dumps(extracted_data, ensure_ascii=False, indent=2))
-            page_results.append({"page": page_num, "extracted_data": extracted_data, "output_path": str(out_path)})
+            for res in batch_results:
+                page_num = res["page"]
+                extracted_data = res["extracted_data"]
+                if extracted_data is None:
+                    raise HTTPException(status_code=502, detail=f"Information extraction failed on page {page_num}")
+                out_name = f"{stem}_page{page_num}.json" if multi_page else f"{stem}.json"
+                out_path = output_dir / out_name
+                out_path.write_text(json.dumps(extracted_data, ensure_ascii=False, indent=2))
+                page_results.append({"page": page_num, "extracted_data": extracted_data, "output_path": str(out_path)})
     finally:
         for temp_path in temp_paths:
             temp_path.unlink(missing_ok=True)
@@ -571,3 +613,57 @@ async def healthcare_pipeline_extraction_batch_endpoint(
         })
 
     return results
+
+
+HEALTHCARE_TYPES_DIR = PROMPTS_DIR / "healthcare_types"
+
+
+@healthcare_pipeline_app.post("/upload-schema")
+async def upload_schema_endpoint(
+    file: UploadFile = File(..., description="JSON template file"),
+    version: str = Form(..., description="Template version, e.g. '1' or '1.0'"),
+    document_type: str = Form(..., description="Document type name, e.g. 'PHIẾU KHÁM BỆNH VÀO VIỆN'"),
+) -> dict[str, object]:
+    """Upload a JSON schema template for a given document type and version.
+
+    Saves the file to data/prompts/healthcare_types/templates_v{version}/ and
+    updates the doctype_map.json in that folder.
+    """
+    if not file.filename or not file.filename.lower().endswith(".json"):
+        raise HTTPException(status_code=400, detail="Uploaded file must be a JSON file (.json)")
+
+    file_bytes = await file.read()
+    if not file_bytes:
+        raise HTTPException(status_code=400, detail="Empty file")
+
+    try:
+        json.loads(file_bytes)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid JSON: {exc}") from exc
+
+    version_str = str(version).strip()
+    templates_dir = HEALTHCARE_TYPES_DIR / f"templates_v{version_str}"
+    templates_dir.mkdir(parents=True, exist_ok=True)
+
+    template_filename = file.filename
+    template_path = templates_dir / template_filename
+    template_path.write_bytes(file_bytes)
+
+    doctype_map_path = templates_dir / "doctype_map.json"
+    if doctype_map_path.exists():
+        with doctype_map_path.open(encoding="utf-8") as f:
+            doctype_map: dict[str, str] = json.load(f)
+    else:
+        doctype_map = {}
+
+    doctype_map[document_type] = template_filename
+    doctype_map_path.write_text(json.dumps(doctype_map, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    return {
+        "status": "success",
+        "version": version_str,
+        "document_type": document_type,
+        "template_filename": template_filename,
+        "template_path": str(template_path),
+        "doctype_map_path": str(doctype_map_path),
+    }
