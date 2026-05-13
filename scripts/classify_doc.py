@@ -7,7 +7,7 @@ from typing import Tuple, Optional
 
 # Configuration
 OLLAMA_BASE_URL = "http://localhost:11434"
-MODEL_NAME = "qwen3.5:2b"
+MODEL_NAME = "qwen3.5:latest"
 
 # Document type mappings from doctype.md
 DOCUMENT_TYPES = {
@@ -20,6 +20,7 @@ DOCUMENT_TYPES = {
     "GIẤY RA VIỆN": {"json": "page-60.json", "template": "page-60-template.json"},
     "BẢNG KÊ CHI PHÍ ĐIỀU TRỊ NGOẠI TRÚ": {"json": "page-61.json", "template": "page-61-template.json"},
     "PHIẾU CÔNG KHAI DỊCH VỤ KCB NỘI TRÚ": {"json": "page-62.json", "template": "page-62-template.json"},
+    "BỆNH ÁN THẬN NHÂN TẠO": {"json": "page-01.json", "template": "page-01-template.json"},
 }
 
 DOCUMENT_NAMES = list(DOCUMENT_TYPES.keys())
@@ -38,7 +39,7 @@ def classify_document(image_path: str, base_url: str = OLLAMA_BASE_URL, model: s
     Args:
         image_path: Path to the image file
         base_url: Ollama base URL (default: http://localhost:11434)
-        model: Model name (default: qwen3.5:cloud)
+        model: Model name (default: qwen3.5:latest)
     
     Returns:
         Tuple of (document_type, template_filename) or (None, None) if classification fails
@@ -105,7 +106,7 @@ def main():
         print(f"Default Model: {MODEL_NAME}")
         print("\nExample:")
         print("  python classify_doc.py /path/to/document.png")
-        print("  python classify_doc.py /path/to/document.png http://localhost:11434 qwen3.5:cloud")
+        print("  python classify_doc.py /path/to/document.png http://localhost:11434 qwen3.5:latest")
         sys.exit(1)
     
     image_path = sys.argv[1]

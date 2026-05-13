@@ -32,7 +32,7 @@ class OllamaLLM(LLMModel):
 
     def __init__(
         self,
-        model: str = "qwen3.5:2b-bf16",
+        model: str = "qwen3.5:latest",
         base_url: str = "http://localhost:11434",
         timeout: int = 300,
         temperature: float = 0,

@@ -7,7 +7,7 @@ Usage (single image):
         --json-template data/prompts/healthcare_types/page-38-template.json \
         --image data/healthcare/hoso1/images/page-38.png \
         --output-dir data/healthcare/hoso1/pred_qwen3.5 \
-        --model qwen3.5:cloud \
+        --model qwen3.5:latest \
         --host http://localhost:11434
 
 Usage (multi-page PDF with batch_size):
@@ -16,7 +16,7 @@ Usage (multi-page PDF with batch_size):
         --json-template data/prompts/healthcare_types/page-38-template.json \
         --pdf document.pdf \
         --output-dir data/healthcare/hoso1/pred_qwen3.5 \
-        --model qwen3.5:cloud \
+        --model qwen3.5:latest \
         --host http://localhost:11434 \
         --batch_size 2
 """

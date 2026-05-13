@@ -23,7 +23,7 @@ OCR_TEMPERATURE = float(os.getenv("OCR_TEMPERATURE", "0"))
 
 # --- LLM model (Step 2: markdown → JSON) ---
 LLM_ENGINE = os.getenv("LLM_ENGINE", "ollama")  # "ollama" or "vllm"
-LLM_MODEL = os.getenv("LLM_MODEL", "qwen3.5:2b-bf16")
+LLM_MODEL = os.getenv("LLM_MODEL", "qwen3.5:latest")
 LLM_TIMEOUT = int(os.getenv("LLM_TIMEOUT", "300"))
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0"))
 LLM_THINK = os.getenv("LLM_THINK", "false").lower() == "true"

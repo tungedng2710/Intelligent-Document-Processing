@@ -19,7 +19,7 @@ import requests
 
 # Configuration
 OLLAMA_BASE_URL = "http://localhost:11434"
-CLASSIFIER_MODEL = "qwen3.5:cloud"
+CLASSIFIER_MODEL = "qwen3.5:latest"
 EXTRACTOR_MODEL = "gemma4:e4b-it-bf16"  # Can be overridden
 
 # Document type mappings from healthcare/hoso1/doctype.md
@@ -67,6 +67,11 @@ DOCUMENT_TYPES = {
     "PHIẾU CÔNG KHAI DỊCH VỤ KCB NỘI TRÚ": {
         "json": "page-62.json",
         "template": "healthcare_types/page-62-template.json",
+        "prompt_template": "healthcare_types/prompt_with_template.txt"
+    },
+    "BỆNH ÁN THẬN NHÂN TẠO": {
+        "json": "page-01.json",
+        "template": "healthcare_types/page-01-template.json",
         "prompt_template": "healthcare_types/prompt_with_template.txt"
     },
 }
