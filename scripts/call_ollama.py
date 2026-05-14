@@ -5,14 +5,14 @@ Usage (folder mode):
     python scripts/call_ollama.py \
         --data_path data/r3_bank_reports/train_data_v1.2 \
         --prompt data/prompts/bank_report_ver_1.0.txt \
-        --model qwen3.5:latest \
+        --model qwen3.5:9b-q4_K_M \
         --port localhost:11434
 
 Usage (image(s) mode):
     python scripts/call_ollama.py \
         --images page1.png page2.png \
         --prompt data/prompts/bank_report_ver_1.0.txt \
-        --model qwen3.5:latest \
+        --model qwen3.5:9b-q4_K_M \
         --port localhost:11434 \
         --batch_size 2 \
         --output result.json   # optional
@@ -21,7 +21,7 @@ Usage (PDF mode):
     python scripts/call_ollama.py \
         --pdf document.pdf \
         --prompt data/prompts/bank_report_ver_1.0.txt \
-        --model qwen3.5:latest \
+        --model qwen3.5:9b-q4_K_M \
         --port localhost:11434 \
         --batch_size 2 \
         --output result.json   # optional

@@ -32,7 +32,7 @@ class VLLMLLM(LLMModel):
 
     def __init__(
         self,
-        model: str = "qwen3.5:latest",
+        model: str = "qwen3.5:9b-q4_K_M",
         base_url: str = "http://localhost:9888",
         timeout: int = 300,
         temperature: float = 0,

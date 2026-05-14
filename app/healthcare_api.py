@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import functools
 import json
 import os
@@ -134,6 +135,57 @@ def _render_pdf_pages(file_bytes: bytes, page_start: int, page_end: int) -> list
     return temp_paths
 
 
+def _is_empty_value(value: object) -> bool:
+    return value is None or value == "" or value == [] or value == {}
+
+
+def _merge_extracted_values(current: object, new_value: object) -> object:
+    if _is_empty_value(current):
+        return copy.deepcopy(new_value)
+    if _is_empty_value(new_value):
+        return copy.deepcopy(current)
+
+    if isinstance(current, dict) and isinstance(new_value, dict):
+        merged = copy.deepcopy(current)
+        for key, value in new_value.items():
+            if key in merged:
+                merged[key] = _merge_extracted_values(merged[key], value)
+            else:
+                merged[key] = copy.deepcopy(value)
+        return merged
+
+    if isinstance(current, list) and isinstance(new_value, list):
+        return [*copy.deepcopy(current), *copy.deepcopy(new_value)]
+
+    if current == new_value:
+        return copy.deepcopy(current)
+
+    return copy.deepcopy(current)
+
+
+def _merge_page_extracted_data(page_results: list[dict[str, object]]) -> dict[str, object]:
+    extracted_pages = [
+        result["extracted_data"]
+        for result in page_results
+        if isinstance(result.get("extracted_data"), dict)
+    ]
+    if not extracted_pages:
+        return {}
+
+    merged = copy.deepcopy(extracted_pages[0])
+    for page_data in extracted_pages[1:]:
+        page_dict = page_data if isinstance(page_data, dict) else {}
+        if (
+            isinstance(merged.get("content"), dict)
+            and "content" not in page_dict
+            and not any(key in page_dict for key in ("id", "hospital", "form"))
+        ):
+            merged["content"] = _merge_extracted_values(merged["content"], page_dict)
+        else:
+            merged = _merge_extracted_values(merged, page_dict)
+    return merged
+
+
 @classify_app.get("/")
 def classify_health() -> dict[str, str]:
     return {
@@ -249,16 +301,9 @@ async def extraction_endpoint(
         for temp_path in temp_paths:
             temp_path.unlink(missing_ok=True)
 
-    response: dict[str, object] = {
-        "status": "success",
-        "prompt_template_path": str(_resolve_template_path(prompt_template_path)),
-        "json_template_path": str(_resolve_template_path(json_template_path)),
-    }
     if multi_page:
-        response["pages"] = page_results
-    else:
-        response["extracted_data"] = page_results[0]["extracted_data"]
-    return response
+        return _merge_page_extracted_data(page_results)
+    return page_results[0]["extracted_data"]
 
 
 @healthcare_pipeline_app.get("/")
@@ -320,15 +365,14 @@ async def healthcare_pipeline_endpoint(
                 if out_src:
                     out_dst = output_dir / f"{stem}_page{page_num}.json"
                     Path(out_src).rename(out_dst)
-                    result["output_path"] = str(out_dst)
-            page_results.append({"page": page_num, **result})
+            page_results.append({"page": page_num, "extracted_data": result["extracted_data"]})
     finally:
         for temp_path in temp_paths:
             temp_path.unlink(missing_ok=True)
 
     if multi_page:
-        return {"status": "success", "pages": page_results}
-    return page_results[0]
+        return _merge_page_extracted_data(page_results)
+    return page_results[0]["extracted_data"]
 
 
 @healthcare_pipeline_app.post("/classify")
@@ -444,17 +488,9 @@ async def healthcare_pipeline_extraction_endpoint(
         for temp_path in temp_paths:
             temp_path.unlink(missing_ok=True)
 
-    response: dict[str, object] = {
-        "status": "success",
-        "document_type": document_type,
-        "template_filename": template_info.get("template"),
-    }
     if multi_page:
-        response["pages"] = page_results
-    else:
-        response["extracted_data"] = page_results[0]["extracted_data"]
-        response["output_path"] = page_results[0]["output_path"]
-    return response
+        return _merge_page_extracted_data(page_results)
+    return page_results[0]["extracted_data"]
 
 
 @healthcare_pipeline_app.post("/classify_batch")
